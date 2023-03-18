@@ -1,0 +1,29 @@
+{
+  "files.eol": "\n",
+  "editor.tabSize": 2,
+  "editor.formatOnSave": true,
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "editor.codeActionsOnSave": ["source.fixAll.eslint", "source.organizeImports"],
+  "jest.autoRun": { "watch": false, "onSave": "test-only" },
+  "cSpell.words": [
+    "bitfield",
+    "blurple",
+    "commitlint",
+    "discordjs",
+    "firestore",
+    "interactor",
+    "iwassistant",
+    "journalctl",
+    "kanata",
+    "mni-mtei",
+    "noemit",
+    "pulseaudio",
+    "sigint",
+    "stringable",
+    "uncapitalize",
+    "undeafen",
+    "undici",
+    "vaio",
+    "xvfb"
+  ]
+}

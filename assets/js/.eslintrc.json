@@ -1,0 +1,20 @@
+{
+  "root": true,
+  "env": {
+    "browser": true,
+    "es6": true
+  },
+  "globals": {
+    "webkitSpeechRecognition": true
+  },
+  "extends": ["eslint:recommended", "prettier"],
+  "parserOptions": { "ecmaVersion": "latest" },
+  "rules": {
+    "curly": ["error", "multi-line"],
+    "eqeqeq": "error",
+    "no-lone-blocks": "error",
+    "no-return-await": "error",
+    "prefer-template": "error",
+    "quotes": ["error", "single", { "avoidEscape": true }]
+  }
+}
