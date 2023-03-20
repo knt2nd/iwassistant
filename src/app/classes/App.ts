@@ -142,18 +142,15 @@ export class App extends PluginAdaptor<AppInterface> {
     if (!env) throw new Error('Invalid env');
     const createProxyHander = <T>(path: string[] = []) => ({
       get: (target: T, prop: keyof T): any => {
-        if (prop == 'isProxy') {
+        if (prop === 'isProxy') {
           return true;
         }
-        if (typeof target[prop] === 'object' && target[prop] != null) {
-          return new Proxy(
-              target[prop],
-              createProxyHander<any>([...path, prop as string])
-          );
+        if (typeof target[prop] === 'object' && target[prop] !== null) {
+          return new Proxy(target[prop], createProxyHander<any>([...path, prop as string]));
         }
         const key = ['IWASSISTANT', path, prop as string].join('_').toUpperCase();
         return process.env[key] || target[prop];
-      }
+      },
     });
     return new Proxy(env, createProxyHander<Env>());
   }
