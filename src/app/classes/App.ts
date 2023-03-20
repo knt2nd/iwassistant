@@ -140,16 +140,16 @@ export class App extends PluginAdaptor<AppInterface> {
   static async env(name = 'default'): Promise<Env> {
     const { env } = (await import(`../../env/${name}`)) as Record<string, Env>;
     if (!env) throw new Error('Invalid env');
-    const createProxyHander = <T>(path: string[] = []) => ({
+    const createProxyHander = <T extends Record<string, any>>(path: (string | number)[] = []): ProxyHandler<T> => ({
       get: (target: T, prop: keyof T): any => {
         if (prop === 'isProxy') {
           return true;
         }
-        if (typeof target[prop] === 'object' && target[prop] !== null) {
-          return new Proxy(target[prop], createProxyHander<any>([...path, prop as string]));
+        if (typeof target[prop] === 'object' && target[prop]) {
+          return new Proxy(target[prop] as Env, createProxyHander<Env>([...path, prop as string]));
         }
-        const key = ['IWASSISTANT', path, prop as string].join('_').toUpperCase();
-        return process.env[key] || target[prop];
+        const key = ['IWASSISTANT', ...path, prop].join('_').toUpperCase();
+        return process.env[key] ?? target[prop];
       },
     });
     return new Proxy(env, createProxyHander<Env>());
