@@ -554,6 +554,25 @@ nodemon --watch './src/**' --signal SIGINT ./src/app/index.ts
 1. Copy `examples/user/engines/iwassistant-engine-tts-notifier` as `src/user/engines/iwassistant-engine-tts-notifier`
 1. Add `'tts-notifier': true` to your env
 
+## Container Usages
+
+```sh
+# Copy docker compose
+cp docker-compose.example.yml docker-compose.yml
+
+# Rewrite DISCORD_TOKEN
+vi docker-compose.yml
+
+# Launch iwassistant
+docker compose up
+```
+
+### Environment variables
+
+Every default.ts config options can be specified as an environment variable by prefixing it with `IWASSISTANT_`, capitalising it, and replacing dots (.) with underscores (_).
+
+For example, the `discord.token` option becomes `IWASSISTANT_DISCORD_TOKEN`.
+
 ## TODO
 
 - More detailed examples
