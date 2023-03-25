@@ -14,7 +14,7 @@ import { EventEmitter } from './EventEmitter';
 
 const ConnectTimeout = 5000;
 const ReconnectTimeout = 30_000;
-const RejoinTryWait = 30_000;
+const RejoinTryWait = 10_000;
 const DisconnectWait = 5000;
 const PlayTimeout = 5000;
 
@@ -28,7 +28,7 @@ type Events = {
   debug: unknown[];
   error: [error: Error];
   join: [connection: VoiceConnection, rejoin: boolean];
-  leave: [];
+  leave: [retry: boolean];
 };
 
 type Options = {
@@ -102,7 +102,6 @@ export class GuildVoiceChannel extends EventEmitter<Events> implements IAudioPla
 
   async join(options: JoinOptions): Promise<boolean> {
     if (this.#current) return false;
-    let reconnecting = false;
     const connection = this.#di.joinVoiceChannel({
       debug: !!this.#debug,
       guildId: this.#guildId,
@@ -110,12 +109,7 @@ export class GuildVoiceChannel extends EventEmitter<Events> implements IAudioPla
       ...options,
     });
     connection.on('debug', (message) => this.#debug?.('connection', message));
-    connection.on('error', (error) => {
-      this.emit('error', this.#createError('connection', error));
-      if (!reconnecting) return;
-      this.#willRejoin = true;
-      setTimeout(() => (this.#willRejoin = false), RejoinTryWait);
-    });
+    connection.on('error', (error) => this.emit('error', this.#createError('connection', error)));
     try {
       await this.#di.entersState(connection, VoiceConnectionStatus.Ready, ConnectTimeout);
     } catch {
@@ -138,14 +132,15 @@ export class GuildVoiceChannel extends EventEmitter<Events> implements IAudioPla
       const options = this.#current.options;
       this.#current = undefined;
       this.#debug?.('connection', 'Destroyed');
-      this.emit('leave');
+      this.emit('leave', this.#willRejoin);
       if (!this.#willRejoin) return;
       this.#debug?.('connection', 'Will rejoin');
-      setTimeout(
-        () => void this.join(options).catch((error) => this.emit('error', this.#createError('connection', error))),
-        RejoinTryWait,
-      );
+      setTimeout(() => {
+        if (!this.#willRejoin) return;
+        this.join(options).catch((error) => this.emit('error', this.#createError('connection', error)));
+      }, RejoinTryWait);
     };
+    let reconnecting = false;
     const onReconnecting = (): void => {
       if (reconnecting) return;
       reconnecting = true;
@@ -179,6 +174,7 @@ export class GuildVoiceChannel extends EventEmitter<Events> implements IAudioPla
       ]).catch(reset);
     });
     connection.subscribe(player);
+    this.#willRejoin = true;
     this.#current = { connection, player, options, queue: [] };
     this.#debug?.('connection', 'Connected', connection.joinConfig);
     this.emit('join', connection, false);
@@ -192,9 +188,9 @@ export class GuildVoiceChannel extends EventEmitter<Events> implements IAudioPla
   }
 
   leave(): boolean {
+    this.#willRejoin = false;
     if (!this.#current) return false;
     this.stop();
-    this.#willRejoin = false;
     this.#current.connection.disconnect();
     return true;
   }

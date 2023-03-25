@@ -36,6 +36,8 @@ export const plugin: IPlugin<Options> = {
         if (newState.member?.user.bot) return; // fetching member is too much
         if (currentChannel) {
           if (oldState.channel && oldState.channel.id === currentChannel.id && countHuman(currentChannel) === 0) {
+            // the following procedure causes a bot being alone, it can be fixed but it's not worth it
+            // bot disconnected by user -> connection destroyed -> last user left
             assistant.leave();
           }
         } else {

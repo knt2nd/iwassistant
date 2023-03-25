@@ -72,7 +72,7 @@ export type GuildAssistantInterface = {
   beforeDestroy(): Awaitable<void>;
   onReady(): Awaitable<void>;
   onJoin(channel: VoiceChannel, connection: VoiceConnection, rejoin: boolean): Awaitable<void>;
-  onLeave(): Awaitable<void>;
+  onLeave(retry: boolean): Awaitable<void>;
   onListen(audio: RecognizableAudio<'guild'>): Awaitable<void>;
   onTranscribe(request: STTRequest<'guild'>, engine: ISpeechToText): Awaitable<void>;
   onDictationCreate(dictation: GuildDictation): Awaitable<void>;
@@ -244,9 +244,9 @@ export class GuildAssistant extends Assistant<GuildAssistantInterface> {
       if (this.engines.maps.stt.size === 0) return;
       this.audioReceiver.subscribe(connection, channel);
     });
-    this.#voiceChannel.on('leave', () => {
+    this.#voiceChannel.on('leave', (retry) => {
       this.log.info('Left');
-      this.emit('leave');
+      this.emit('leave', retry);
     });
     this.audioReceiver.on('create', (audio) => {
       this.emit('listen', audio);
