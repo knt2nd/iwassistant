@@ -37,7 +37,7 @@ export const plugin: IPlugin<Options> = {
       ['[*_`~]', 'g'], // markdown
       ['^>+ ', 'gm'], // quote
     ],
-    replacers: [['https?://[\\w#$%&()+./:=?@~-]+', 'URL']],
+    replacers: [['https?://[!#$%&()+,./:=?@\\w~-]+', 'URL']],
     nameless: 60 * 60 * 1000,
   },
   setupGuild({ config, assistant }) {
