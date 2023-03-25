@@ -94,11 +94,11 @@ export const plugin: IPlugin<Options> = {
         if (speech.request.text.length < CancelableLength) return;
         cancelButton = await message.react(CancelEmoji);
       });
-      speech.once('end', async () => {
+      speech.once('end', () => {
         if (!cancelButton) return;
         const button = cancelButton;
         cancelButton = undefined;
-        await button.remove();
+        button.remove().catch((error) => speech.emit('error', error));
       });
       assistant.audioPlayer.play(speech);
     };
