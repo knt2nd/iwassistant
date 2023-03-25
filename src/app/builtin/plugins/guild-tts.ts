@@ -56,7 +56,7 @@ export const plugin: IPlugin<Options> = {
     const isSpeakable = (channelId: string): boolean => {
       const current = assistant.voice;
       if (!current) return false;
-      const target = assistant.data.get('guild-config')?.voiceChannels?.[current.channelId]?.source ?? 'all';
+      const target = assistant.data.get('guild-config')?.voiceChannels?.[current.channelId]?.input ?? 'all';
       return target === 'all' || target === channelId;
     };
     const speak = (content: string, member: GuildMember, message: Message<true>, to?: string): void => {
@@ -124,9 +124,9 @@ export const plugin: IPlugin<Options> = {
         const member = await assistant.guild.members.fetch(userId);
         speak(decodeMessage(text, assistant.guild), member, message, to);
       },
-      onTranslationCreate({ response, source, dist, member }) {
-        if (!isSpeakable(dist.channel.id)) return;
-        speak(decodeMessage(response.text, source), member, dist, response.to);
+      onTranslationCreate({ response, source, destination, member }) {
+        if (!isSpeakable(destination.channel.id)) return;
+        speak(decodeMessage(response.text, source), member, destination, response.to);
       },
       onMessageReactionAdd(reaction, user) {
         if (

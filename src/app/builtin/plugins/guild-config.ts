@@ -187,7 +187,7 @@ function configureVoiceChannels(
     locale: Locale;
     member: GuildMember;
     channel: VoiceChannel;
-    input?: { key: 'dictation' | 'stt' | 'dist' | 'source' | 'join'; value: string };
+    input?: { key: 'dictation' | 'stt' | 'output' | 'input' | 'join'; value: string };
   },
 ) {
   const { config, dict, data, assistant } = context;
@@ -211,14 +211,14 @@ function configureVoiceChannels(
         name: subDict.get('sttType'),
         options: voiceOptions,
       },
-      dist: {
-        id: `${path}/dist`,
-        name: subDict.get('sttDist'),
+      output: {
+        id: `${path}/output`,
+        name: subDict.get('sttOutput'),
         options: [{ value: 'self', label: `🔊 ${channel.name}` }, ...channelOptions],
       },
-      source: {
-        id: `${path}/source`,
-        name: subDict.get('ttsSource'),
+      input: {
+        id: `${path}/input`,
+        name: subDict.get('ttsInput'),
         options: [{ value: 'all', label: subDict.get('all') }, ...channelOptions],
       },
       join: {
@@ -230,8 +230,8 @@ function configureVoiceChannels(
     data: {
       dictation: savedData?.dictation ? 'on' : 'off',
       stt: selectVoiceOptionValue(voiceOptions, savedData?.stt ?? assistant.defaultSTT),
-      dist: savedData?.dist ?? 'self',
-      source: savedData?.source ?? 'all',
+      output: savedData?.output ?? 'self',
+      input: savedData?.input ?? 'all',
       join: (savedData ? savedData.join : config.autoJoin) ? 'on' : 'off',
     },
     input,
@@ -325,8 +325,8 @@ export type Options = {
     multilingualGroup: { type: 'simple' };
     dictation: { type: 'simple' };
     sttType: { type: 'simple' };
-    sttDist: { type: 'simple' };
-    ttsSource: { type: 'simple' };
+    sttOutput: { type: 'simple' };
+    ttsInput: { type: 'simple' };
     autoJoin: { type: 'simple' };
     notificationReaction: { type: 'simple' };
     ttsVoice: { type: 'simple' };
@@ -350,8 +350,8 @@ export type Options = {
         {
           dictation: boolean;
           stt: VoiceConfig;
-          dist: string;
-          source: string;
+          output: string;
+          input: string;
           join: boolean;
         }
       >;
@@ -405,8 +405,8 @@ export const plugin: IPlugin<Options> = {
         multilingualGroup: 'Join Multilingual Group',
         dictation: 'Dictation',
         sttType: 'Voice Recognition Type',
-        sttDist: 'Voice Recognition Output Channel',
-        ttsSource: 'Text-to-Speech Input Channel',
+        sttOutput: 'Voice Recognition Output Channel',
+        ttsInput: 'Text-to-Speech Input Channel',
         autoJoin: 'Auto Join',
         notificationReaction: 'Notification - Reaction ',
         ttsVoice: 'Text-to-Speech - Voice',
@@ -442,8 +442,8 @@ export const plugin: IPlugin<Options> = {
         multilingualGroup: '多言語グループに参加',
         dictation: '議事録',
         sttType: '音声認識タイプ',
-        sttDist: '音声認識出力チャンネル',
-        ttsSource: '読み上げ入力チャンネル',
+        sttOutput: '音声認識出力チャンネル',
+        ttsInput: '読み上げ入力チャンネル',
         autoJoin: '自動入室',
         notificationReaction: '通知 - リアクション',
         ttsVoice: '読み上げ - 音声',
@@ -479,8 +479,8 @@ export const plugin: IPlugin<Options> = {
         multilingualGroup: '加入多语言群',
         dictation: '听写',
         sttType: '语音识别型',
-        sttDist: '语音识别输出频道',
-        ttsSource: '朗读输入频道',
+        sttOutput: '语音识别输出频道',
+        ttsInput: '朗读输入频道',
         autoJoin: '自动加入',
         notificationReaction: '通知 - 反应',
         ttsVoice: '朗读 - 语音',
@@ -516,8 +516,8 @@ export const plugin: IPlugin<Options> = {
         multilingualGroup: '加入多語言群',
         dictation: '聽寫',
         sttType: '語音識別型',
-        sttDist: '語音識別輸出頻道',
-        ttsSource: '朗讀輸入頻道',
+        sttOutput: '語音識別輸出頻道',
+        ttsInput: '朗讀輸入頻道',
         autoJoin: '自動加入',
         notificationReaction: '通知 - 反應',
         ttsVoice: '朗讀 - 語音',
@@ -625,8 +625,8 @@ export const plugin: IPlugin<Options> = {
             switch (req.target.key) {
               case 'dictation':
               case 'stt':
-              case 'dist':
-              case 'source':
+              case 'output':
+              case 'input':
               case 'join': {
                 const res = configureVoiceChannels(context, {
                   locale: req.locale,
@@ -635,14 +635,14 @@ export const plugin: IPlugin<Options> = {
                   input: { key: req.target.key, value },
                 });
                 if (res.updated) {
-                  const { dictation, stt, dist, source, join } = res.data;
+                  const { dictation, stt, output, input, join } = res.data;
                   const voiceConfig = parseVoiceId(stt) ?? { ...assistant.defaultSTT };
                   const channels = data.voiceChannels ?? {};
                   channels[channel.id] = {
                     dictation: dictation === 'on',
                     stt: voiceConfig,
-                    dist,
-                    source,
+                    output,
+                    input,
                     join: join === 'on',
                   };
                   data.voiceChannels = channels;

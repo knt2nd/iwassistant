@@ -94,8 +94,8 @@ export const plugin: IPlugin<Options> = {
               .setDescription(config.link ? `${content}\n\n[🌐 ${res.from}:${res.to}](${source.url})` : content);
             if (!nameless) embed.setAuthor({ name: member.displayName, iconURL: member.displayAvatarURL() });
             if (config.original) embed.setFooter({ text: omitString(decodeMessage(text, source), 1000) });
-            const dist = await channel.send({ embeds: [embed] });
-            assistant.emit('translationCreate', { request: req, response: res, source, dist, member });
+            const destination = await channel.send({ embeds: [embed] });
+            assistant.emit('translationCreate', { request: req, response: res, source, destination, member });
           })(),
         );
       }
@@ -127,8 +127,8 @@ export const plugin: IPlugin<Options> = {
         const member = await assistant.guild.members.fetch(userId);
         await translate(embed.description, message, member);
       },
-      async onDictationCreate({ source, dist, member }) {
-        await translate(source.transcript, dist, member);
+      async onDictationCreate({ source, destination, member }) {
+        await translate(source.transcript, destination, member);
       },
     };
   },

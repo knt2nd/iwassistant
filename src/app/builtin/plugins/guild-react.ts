@@ -142,7 +142,7 @@ export const plugin: IPlugin<Options> = {
         const sentMessage = await message.channel.send(text);
         const voiceChannelId = assistant.voice?.channelId;
         if (voiceChannelId) {
-          const target = assistant.data.get('guild-config')?.voiceChannels?.[voiceChannelId]?.source ?? 'all';
+          const target = assistant.data.get('guild-config')?.voiceChannels?.[voiceChannelId]?.input ?? 'all';
           if (target === 'all' || target === message.channelId) {
             assistant.speak(decodeMessage(sentMessage.content, sentMessage));
           }
@@ -157,7 +157,7 @@ export const plugin: IPlugin<Options> = {
       },
       async onDictationCreate(dictation) {
         if (lock) return;
-        await react(dictation.source.transcript, dictation.dist);
+        await react(dictation.source.transcript, dictation.destination);
       },
     };
   },

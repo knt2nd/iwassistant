@@ -156,7 +156,7 @@ class RecognizableAudioImpl extends EventEmitter<{ end: []; abort: [] }> impleme
   readonly type = 'guild';
   readonly member: GuildMember;
   readonly channel: VoiceChannel;
-  dist: TextChannel | VoiceChannel;
+  destination: TextChannel | VoiceChannel;
   readonly resource: Readable;
   readonly results: string[];
   transcript: string;
@@ -166,7 +166,7 @@ class RecognizableAudioImpl extends EventEmitter<{ end: []; abort: [] }> impleme
     super(errorHandler);
     this.member = member;
     this.channel = channel;
-    this.dist = channel;
+    this.destination = channel;
     this.resource = new Readable({ read: () => {} });
     this.results = [];
     this.transcript = '';

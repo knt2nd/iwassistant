@@ -28,13 +28,13 @@ class WebSocketClient extends EventEmitter {
 
 class AudioPlayer extends EventEmitter {
   #context = new AudioContext();
-  #dest = this.#context.createMediaStreamDestination();
+  #destination = this.#context.createMediaStreamDestination();
   #scheduledTime = 0;
   #fixed = false;
   #sources = [];
 
   get stream() {
-    return this.#dest.stream;
+    return this.#destination.stream;
   }
 
   play(chunk) {
@@ -44,7 +44,7 @@ class AudioPlayer extends EventEmitter {
     const source = this.#context.createBufferSource();
     buffer.getChannelData(0).set(data);
     source.buffer = buffer;
-    source.connect(this.#dest);
+    source.connect(this.#destination);
     source.onended = () => {
       if (this.#sources.length === 0) return;
       this.#sources.shift();

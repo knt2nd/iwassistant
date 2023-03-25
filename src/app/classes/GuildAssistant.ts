@@ -427,7 +427,7 @@ export class GuildAssistant extends Assistant<GuildAssistantInterface> {
       if (message) return message;
       this.beep(result);
       const emoji = CommandResultEmoji[result];
-      return (message = await source.dist.send(`${userMention(member.id)} \`/${command.id}\` ${emoji}`));
+      return (message = await source.destination.send(`${userMention(member.id)} \`/${command.id}\` ${emoji}`));
     };
     const event: CommandEvent<'guild'> = {
       type: 'voice',
