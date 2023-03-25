@@ -1,4 +1,4 @@
-import { copyFileSync, existsSync, mkdirSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 const Directories = {
@@ -9,16 +9,18 @@ const Directories = {
 };
 
 const DefaultEnv = {
-  source: join(__dirname, '../examples/env/default.ts'),
-  dest: join(Directories.env, 'default.ts'),
+  from: join(__dirname, '../examples/env/default.ts'),
+  to: join(Directories.env, 'default.ts'),
 };
 
 for (const dir of Object.values(Directories)) {
   mkdirSync(dir, { recursive: true });
 }
 
-if (!existsSync(DefaultEnv.dest)) {
-  copyFileSync(DefaultEnv.source, DefaultEnv.dest);
+if (!existsSync(DefaultEnv.to)) {
+  let env = readFileSync(DefaultEnv.from, 'utf8');
+  if (process.env['DISCORD_TOKEN']) env = env.replace('token:', '// token:');
+  writeFileSync(DefaultEnv.to, env, 'utf8');
 }
 
 console.log('iwassistant - prepared');
