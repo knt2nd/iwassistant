@@ -190,7 +190,7 @@ export class DiscordManager<Ready extends boolean = boolean> {
   }
 
   #initializeEvents(app: App, log: Logger): void {
-    const assistants: GuildAssistantManager = this.assistants;
+    const assistants = this.assistants;
     /*
      * System
      */
