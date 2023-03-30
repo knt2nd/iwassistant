@@ -546,8 +546,8 @@ nodemon --watch './src/**' --signal SIGINT ./src/app/index.ts
 
 ### User Plugin Example
 
-1. Copy `examples/user/plugins/iwassistant-plugin-guild-ping` as `src/user/plugins/iwassistant-plugin-guild-ping`
-1. Add `'guild-ping': true` to your env
+1. Copy `examples/user/plugins/iwassistant-plugin-guild-echo` as `src/user/plugins/iwassistant-plugin-guild-echo`
+1. Add `'guild-echo': true` to your env
 
 ### User Engine Example
 
