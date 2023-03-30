@@ -118,7 +118,7 @@ export const plugin: IPlugin<Options> = {
         prevDictation = undefined;
       },
       onListen(audio) {
-        let interim = config.command;
+        let interim = config.command && config.timeout > 0;
         const channelConfig = allChannelConfigs?.[audio.channel.id];
         if (channelConfig?.output) {
           const channel = assistant.guild.channels.cache.get(channelConfig.output);
@@ -150,7 +150,7 @@ export const plugin: IPlugin<Options> = {
           const command = assistant.interpret(audio.transcript);
           if (command) assistant.run({ command, source: audio });
         });
-        if (interim && config.timeout > 0) {
+        if (interim) {
           const timer = setTimeout(() => audio.abort(), config.timeout);
           const onResult = (transcript: string): void => {
             if (!assistant.activation.pattern.test(transcript)) return;
