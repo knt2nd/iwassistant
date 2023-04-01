@@ -18,9 +18,9 @@ enum Status {
 }
 
 export type HomeAssistantInterface = {
+  beforeTranscribe(request: STTRequest<'home'>): Awaitable<void>;
   beforeDestroy(): Awaitable<void>;
   onReady(): Awaitable<void>;
-  onTranscribe(request: STTRequest<'home'>): Awaitable<void>;
 };
 
 export type HomeAssistantOptions = {};

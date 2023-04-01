@@ -53,9 +53,9 @@ export const plugin: IPlugin<Options> = {
         data._count = ++count;
         log.info(`Text(${count}): ${text}`);
       },
-      onListen(audio) {
-        audio.once('end', async () => {
-          const text = config.prefix + audio.transcript;
+      beforeTranscribe(request) {
+        request.audio.once('end', async () => {
+          const text = config.prefix + request.audio.transcript;
           log.debug?.(`Wait: ${config.wait}`);
           await sleep(config.wait);
           assistant.speak(text);

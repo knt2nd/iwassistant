@@ -69,12 +69,12 @@ export type GuildAssistantInterface = {
   beforeCommandsUpdate(commands: (SlashCommandBuilder | ContextMenuCommandBuilder)[]): Awaitable<void>;
   beforeJoin(options: JoinOptions, rejoin: boolean): Awaitable<void>;
   beforeSpeak(speech: PlayableSpeech<'guild'>): Awaitable<void>;
+  beforeTranscribe(request: STTRequest<'guild'>, engine: ISpeechToText): Awaitable<void>;
   beforeDestroy(): Awaitable<void>;
   onReady(): Awaitable<void>;
   onJoin(channel: VoiceChannel, connection: VoiceConnection, rejoin: boolean): Awaitable<void>;
   onLeave(retry: boolean): Awaitable<void>;
   onListen(audio: RecognizableAudio<'guild'>): Awaitable<void>;
-  onTranscribe(request: STTRequest<'guild'>, engine: ISpeechToText): Awaitable<void>;
   onDictationCreate(dictation: GuildDictation): Awaitable<void>;
   onTranslationCreate(translation: GuildTranslation): Awaitable<void>;
   // Discord.js events
@@ -487,10 +487,10 @@ export class GuildAssistant extends Assistant<GuildAssistantInterface> {
     this.audioReceiver.disable();
   }
 
-  transcribe(options: TranscribeOptions): boolean {
+  async transcribe(options: TranscribeOptions): Promise<boolean> {
     const stt = this.engines.getSTT(options.engine);
     this.fallbackVoice(stt, options);
-    this.emit('transcribe', options.request, stt);
+    await this.hook('transcribe', options.request, stt);
     return stt.transcribe(options.request);
   }
 
