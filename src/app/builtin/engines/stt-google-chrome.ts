@@ -496,12 +496,20 @@ class LoadBalancer {
   }
 
   distribute(request: STTRequest): boolean {
+    const instance = this.#select();
+    if (!instance) return false;
+    this.#log.debug?.(`[LB] ${instance.id} <= ${this.#instances.map((i) => [i.id, i.queued, i.active]).join('/')}`);
+    (async () => {
+      if (request.audio.prepare) await request.audio.prepare();
+      instance.transcribe(request);
+    })().catch(this.#log.error);
+    return true;
+  }
+
+  #select(): ChromeSTT | undefined {
     if (this.#instances.length === 1) {
       const instance = this.#instances[0];
-      if (!instance?.active) return false;
-      this.#log.debug?.(`[LB] ${instance.queued}`);
-      instance.transcribe(request);
-      return true;
+      return instance?.active ? instance : undefined;
     }
     let selected: ChromeSTT | undefined;
     let min = Number.POSITIVE_INFINITY;
@@ -516,10 +524,7 @@ class LoadBalancer {
         min = instance.queued;
       }
     }
-    if (!selected) return false;
-    this.#log.debug?.(`[LB] ${selected.id} <= ${this.#instances.map((i) => [i.id, i.queued, i.active]).join('/')}`);
-    selected.transcribe(request);
-    return true;
+    return selected;
   }
 }
 

@@ -487,10 +487,10 @@ export class GuildAssistant extends Assistant<GuildAssistantInterface> {
     this.audioReceiver.disable();
   }
 
-  async transcribe(options: TranscribeOptions): Promise<boolean> {
+  transcribe(options: TranscribeOptions): boolean {
     const stt = this.engines.getSTT(options.engine);
     this.fallbackVoice(stt, options);
-    await this.hook('transcribe', options.request, stt);
+    options.request.audio.prepare = async () => void (await this.hook('transcribe', options.request, stt));
     return stt.transcribe(options.request);
   }
 

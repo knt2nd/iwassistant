@@ -231,63 +231,69 @@ export const engine: IEngine<Config> = {
     model: '',
   },
   createSTT({ config, app }) {
+    let counter = 0;
     const log = app.log.createChild('STT');
     const decoder = new AudioDecoder();
     const client = new SpeechClient({ keyFile: config.secret });
-    let counter = 0;
+    const transcribe = (request: STTRequest): void => {
+      log.debug?.(`[${++counter}] Request`);
+      // speechContexts option makes more accurate? :thinking:
+      // https://cloud.google.com/speech-to-text/docs/reference/rpc/google.cloud.speech.v1p1beta1
+      const recognizer = client.streamingRecognize({
+        interimResults: request.interim,
+        singleUtterance: request.interim,
+        config: {
+          languageCode: request.voice || DefaultVoice,
+          encoding: 'LINEAR16',
+          sampleRateHertz: 48_000,
+          audioChannelCount: 1,
+          profanityFilter: config.profanityFilter,
+          enableAutomaticPunctuation: config.automaticPunctuation,
+          enableSpokenPunctuation: { value: config.spokenPunctuation },
+          enableSpokenEmojis: { value: config.spokenEmojis },
+          model: config.model || null,
+        },
+      });
+      const audio = request.audio;
+      const onAbort = (): void => void recognizer.destroy();
+      if (log.debug) audio.once('abort', () => log.debug?.(`[${counter}] Abort`));
+      audio.emit('start', request);
+      audio.once('abort', onAbort);
+      audio.resource.once('close', () => recognizer.end());
+      audio.resource.on('data', (chunk: Buffer) => recognizer.write(decoder[audio.type](chunk)));
+      recognizer.on('error', log.error);
+      recognizer.once('end', () => recognizer.destroy());
+      recognizer.once('close', () => {
+        if (audio.aborted) return;
+        if (audio.resource.closed) {
+          audio.emit('end', request);
+          log.debug?.(`[${counter}] Close`);
+        } else {
+          audio.off('abort', onAbort);
+          audio.abort();
+          log.debug?.(`[${counter}] Close and abort`);
+        }
+      });
+      recognizer.on('data', (data: google.cloud.speech.v1.StreamingRecognizeResponse) => {
+        let transcript = '';
+        for (let i = 0; i < data.results.length; i++) {
+          transcript += data.results[i]?.alternatives?.[0]?.transcript ?? '';
+        }
+        if (transcript.length === 0) return;
+        const isFinal = !!data.results.at(-1)?.isFinal;
+        audio.emit('result', transcript, isFinal);
+        if (isFinal) audio.results.push(transcript);
+        log.debug?.(`[${counter}] ${isFinal ? 'Final' : 'Interim'}: ${transcript}`);
+      });
+    };
     return {
       active: true,
       locales: availableLocales(),
       transcribe: (request) => {
-        log.debug?.(`[${++counter}] Request`);
-        // speechContexts option makes more accurate? :thinking:
-        // https://cloud.google.com/speech-to-text/docs/reference/rpc/google.cloud.speech.v1p1beta1
-        const recognizer = client.streamingRecognize({
-          interimResults: request.interim,
-          singleUtterance: request.interim,
-          config: {
-            languageCode: request.voice || DefaultVoice,
-            encoding: 'LINEAR16',
-            sampleRateHertz: 48_000,
-            audioChannelCount: 1,
-            profanityFilter: config.profanityFilter,
-            enableAutomaticPunctuation: config.automaticPunctuation,
-            enableSpokenPunctuation: { value: config.spokenPunctuation },
-            enableSpokenEmojis: { value: config.spokenEmojis },
-            model: config.model || null,
-          },
-        });
-        const audio = request.audio;
-        const onAbort = (): void => void recognizer.destroy();
-        if (log.debug) audio.once('abort', () => log.debug?.(`[${counter}] Abort`));
-        audio.emit('start', request);
-        audio.once('abort', onAbort);
-        audio.resource.once('close', () => recognizer.end());
-        audio.resource.on('data', (chunk: Buffer) => recognizer.write(decoder[audio.type](chunk)));
-        recognizer.on('error', log.error);
-        recognizer.once('end', () => recognizer.destroy());
-        recognizer.once('close', () => {
-          if (audio.aborted) return;
-          if (audio.resource.closed) {
-            audio.emit('end', request);
-            log.debug?.(`[${counter}] Close`);
-          } else {
-            audio.off('abort', onAbort);
-            audio.abort();
-            log.debug?.(`[${counter}] Close and abort`);
-          }
-        });
-        recognizer.on('data', (data: google.cloud.speech.v1.StreamingRecognizeResponse) => {
-          let transcript = '';
-          for (let i = 0; i < data.results.length; i++) {
-            transcript += data.results[i]?.alternatives?.[0]?.transcript ?? '';
-          }
-          if (transcript.length === 0) return;
-          const isFinal = !!data.results.at(-1)?.isFinal;
-          audio.emit('result', transcript, isFinal);
-          if (isFinal) audio.results.push(transcript);
-          log.debug?.(`[${counter}] ${isFinal ? 'Final' : 'Interim'}: ${transcript}`);
-        });
+        (async () => {
+          if (request.audio.prepare) await request.audio.prepare();
+          transcribe(request);
+        })().catch(log.error);
         return true;
       },
     };

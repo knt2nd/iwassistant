@@ -37,6 +37,7 @@ type RecognizableAudio<T extends AssistantType = AssistantType> = (T extends 'gu
   readonly transcript: string;
   readonly aborted: boolean;
   abort(): void;
+  prepare?: () => Promise<void>;
 } & import('../classes/EventEmitter').EventEmitter<{
     start: [request: STTRequest<T>];
     end: [request: STTRequest<T>];

@@ -117,7 +117,7 @@ export const plugin: IPlugin<Options> = {
         assistant.deafen();
         prevDictation = undefined;
       },
-      async onListen(audio) {
+      onListen(audio) {
         let interim = config.command && config.timeout > 0;
         const channelConfig = allChannelConfigs?.[audio.channel.id];
         if (channelConfig?.output) {
@@ -160,7 +160,7 @@ export const plugin: IPlugin<Options> = {
           audio.on('result', onResult);
         }
         const options = { ...(channelConfig?.stt ?? assistant.defaultSTT) };
-        await assistant.transcribe({
+        assistant.transcribe({
           engine: {
             name: options.name,
             locale: options.locale,
