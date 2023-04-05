@@ -70,7 +70,7 @@ export const env: Env = {
 Then build and launch.
 
 ```sh
-npm build
+npm run build
 npm start
 ```
 
@@ -467,7 +467,7 @@ Edit `src/env/default.ts` as follows.
 Then build and launch. It should work perfectly.
 
 ```sh
-npm build
+npm run build
 xvfb-run -n 0 -s "-screen 0 1x1x8" npm start
 ```
 
@@ -517,7 +517,7 @@ journalctl -u iwassistant -f
 1. Build and launch with an env option
 
 ```sh
-npm build
+npm run build
 npm start -- --env my-alt-env
 ```
 
