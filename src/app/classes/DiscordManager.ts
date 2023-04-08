@@ -172,6 +172,7 @@ export class DiscordManager<Ready extends boolean = boolean> {
     this.#status = Status.destroyed;
   }
 
+  // FIXME narrowing doesn't seem to work, something changed between TS v4.9.5 and v5.0.3?
   isReady(): this is DiscordManager<true> {
     return this.#status === Status.ready;
   }

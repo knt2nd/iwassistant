@@ -65,6 +65,8 @@ enum Status {
   destroyed,
 }
 
+type PlayableSpeechMessage = Exclude<PlayableSpeech<'guild'>['message'], undefined>;
+
 export type GuildAssistantInterface = {
   beforeCommandsUpdate(commands: (SlashCommandBuilder | ContextMenuCommandBuilder)[]): Awaitable<void>;
   beforeJoin(options: JoinOptions, rejoin: boolean): Awaitable<void>;
@@ -494,9 +496,7 @@ export class GuildAssistant extends Assistant<GuildAssistantInterface> {
     return stt.transcribe(options.request);
   }
 
-  createSpeech(
-    options: CreateSpeechOptions & { message?: PlayableSpeech<'guild'>['message'] },
-  ): PlayableSpeech<'guild'> {
+  createSpeech(options: CreateSpeechOptions & { message?: PlayableSpeechMessage }): PlayableSpeech<'guild'> {
     const tts = this.engines.getTTS(options.engine);
     this.fallbackVoice(tts, options);
     const speech = new PlayableSpeechImpl(
@@ -520,12 +520,12 @@ class PlayableSpeechImpl
   readonly #generator: (request: TTSRequest) => Promise<TTSResponse>;
   readonly request: TTSRequest;
   response: TTSResponse | undefined;
-  readonly message?: PlayableSpeech<'guild'>['message'];
+  readonly message?: PlayableSpeechMessage;
 
   constructor(
     generator: (request: TTSRequest) => Promise<TTSResponse>,
     request: TTSRequest,
-    message: PlayableSpeech<'guild'>['message'] | undefined,
+    message: PlayableSpeechMessage | undefined,
     errorHandler: ErrorHandler,
   ) {
     super(errorHandler);
