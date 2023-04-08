@@ -16,7 +16,6 @@
     "moduleResolution": "Node",
     "resolveJsonModule": true,
     // Emit
-    "importsNotUsedAsValues": "error",
     "newLine": "lf",
     "outDir": "./dist/",
     // Interop Constraints
