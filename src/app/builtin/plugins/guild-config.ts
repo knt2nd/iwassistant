@@ -535,7 +535,7 @@ export const plugin: IPlugin<Options> = {
         assistant.options.locale = data.guildLocale;
       },
       async onInteractionCreate(interaction) {
-        if (!app.discord.client.user || !interaction.isStringSelectMenu() || !interaction.values[0]) return;
+        if (!app.discord.isReady() || !interaction.isStringSelectMenu() || !interaction.values[0]) return;
         if (!interaction.customId.startsWith(`guild-config/${app.discord.client.user.id}/`)) return;
         const path = interaction.customId.split('/');
         if (!path[2] || !isLocale(path[2]) || !path[3] || !path[4] || !path[5] || !path[6]) return;
