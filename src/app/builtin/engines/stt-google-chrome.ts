@@ -278,7 +278,7 @@ class ChromeLauncher extends EventEmitter<{ error: [error: Error] }> {
   }
 }
 
-class ChromeAdaptor extends EventEmitter<{
+class ChromeAdapter extends EventEmitter<{
   error: [error: Error];
   ready: [report: string];
   start: [];
@@ -354,7 +354,7 @@ class ChromeAdaptor extends EventEmitter<{
       });
     });
     return new Promise((resolve, reject) => {
-      const timer = setTimeout(() => reject(new Error('Unable to create a Chrome adaptor')), 5000);
+      const timer = setTimeout(() => reject(new Error('Unable to create a Chrome adapter')), 5000);
       wss.once('listening', () => {
         clearTimeout(timer);
         resolve();
@@ -380,7 +380,7 @@ class ChromeSTT extends EventEmitter<{ error: [error: Error] }> {
   readonly id: number;
   readonly #decoder: AudioDecoder;
   readonly #launcher: ChromeLauncher;
-  readonly #adaptor: ChromeAdaptor;
+  readonly #adapter: ChromeAdapter;
   readonly #queue: STTRequest[];
 
   constructor(options: ChromeLauncherOptions, decoder: AudioDecoder, log: Logger) {
@@ -388,14 +388,14 @@ class ChromeSTT extends EventEmitter<{ error: [error: Error] }> {
     this.id = options.port;
     this.#decoder = decoder;
     this.#launcher = new ChromeLauncher(options, log);
-    this.#adaptor = new ChromeAdaptor(options.port, log);
+    this.#adapter = new ChromeAdapter(options.port, log);
     this.#launcher.on('error', (error) => void this.emit('error', error));
-    this.#adaptor.on('error', (error) => void this.emit('error', error));
+    this.#adapter.on('error', (error) => void this.emit('error', error));
     this.#queue = [];
   }
 
   get active(): boolean {
-    return this.#adaptor.active;
+    return this.#adapter.active;
   }
 
   get queued(): number {
@@ -403,17 +403,17 @@ class ChromeSTT extends EventEmitter<{ error: [error: Error] }> {
   }
 
   async setup(): Promise<{ input: string; output: string | undefined }> {
-    this.#adaptor.on('start', () => {
-      if (!this.#queue[0]) return this.#adaptor.call('stop');
+    this.#adapter.on('start', () => {
+      if (!this.#queue[0]) return this.#adapter.call('stop');
       const request = this.#queue[0];
       const audio = request.audio;
       const decode = this.#decoder[audio.type];
       audio.emit('start', request);
       audio.once('abort', this.#onAbort);
-      audio.resource.once('close', () => this.#adaptor.call('fix'));
-      audio.resource.on('data', (chunk: Buffer) => this.#adaptor.play(decode(chunk)));
+      audio.resource.once('close', () => this.#adapter.call('fix'));
+      audio.resource.on('data', (chunk: Buffer) => this.#adapter.play(decode(chunk)));
     });
-    this.#adaptor.on('stop', () => {
+    this.#adapter.on('stop', () => {
       if (!this.#queue[0]) return;
       const request = this.#queue[0];
       const audio = request.audio;
@@ -428,27 +428,27 @@ class ChromeSTT extends EventEmitter<{ error: [error: Error] }> {
       this.#queue.shift();
       if (this.#queue[0]) this.#start(this.#queue[0]);
     });
-    this.#adaptor.on('result', (transcript, isFinal) => {
+    this.#adapter.on('result', (transcript, isFinal) => {
       if (!this.#queue[0]) return;
       const audio = this.#queue[0].audio;
       audio.emit('result', transcript, isFinal);
       if (isFinal) audio.results.push(transcript);
     });
-    await this.#adaptor.setup();
+    await this.#adapter.setup();
     const output = await this.#launcher.setup();
     const input = await new Promise<string>((resolve) => {
-      this.#adaptor.once('ready', resolve);
+      this.#adapter.once('ready', resolve);
       this.#launcher.launch();
     });
     return { input, output };
   }
 
   #start(request: STTRequest): void {
-    this.#adaptor.call('start', request.interim ? '1' : '0', request.voice || DefaultVoice);
+    this.#adapter.call('start', request.interim ? '1' : '0', request.voice || DefaultVoice);
   }
 
   #onAbort = (): void => {
-    this.#adaptor.call('stop');
+    this.#adapter.call('stop');
   };
 
   transcribe(request: STTRequest): void {

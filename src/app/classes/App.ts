@@ -8,7 +8,7 @@ import { GuildAssistantManager } from './GuildAssistantManager';
 import { HomeAssistant } from './HomeAssistant';
 import { Logger } from './Logger';
 import { ModuleLoader } from './ModuleLoader';
-import { PluginAdaptor } from './PluginAdaptor';
+import { PluginAdapter } from './PluginAdapter';
 import type { PluginContextOptions } from './PluginManager';
 import { PluginManager } from './PluginManager';
 
@@ -57,7 +57,7 @@ export type AppInterface = {
   onUserUpdate(...args: ClientEvents['userUpdate']): Awaitable<void>;
 };
 
-export class App extends PluginAdaptor<AppInterface> {
+export class App extends PluginAdapter<AppInterface> {
   readonly locale: Locale;
   readonly data: Datastore<'app'>;
   readonly log: Logger;

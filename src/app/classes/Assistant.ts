@@ -5,8 +5,8 @@ import { isLanguage, isRegionLocale, omitObject, toLanguage, toRegionLocales } f
 import type { EngineManager } from './EngineManager';
 import { EventEmitter } from './EventEmitter';
 import type { Logger } from './Logger';
-import type { AttachedCommand, PluginInterface } from './PluginAdaptor';
-import { PluginAdaptor } from './PluginAdaptor';
+import type { AttachedCommand, PluginInterface } from './PluginAdapter';
+import { PluginAdapter } from './PluginAdapter';
 
 const DefaultActivationWord: I18n<{ example: string; patterns: string[] }> = {
   en: {
@@ -70,7 +70,7 @@ export type AssistantOptions = {
   };
 };
 
-export abstract class Assistant<T extends PluginInterface> extends PluginAdaptor<T> {
+export abstract class Assistant<T extends PluginInterface> extends PluginAdapter<T> {
   abstract readonly log: Logger;
   abstract readonly engines: EngineManager;
   abstract readonly audioPlayer: IAudioPlayer;

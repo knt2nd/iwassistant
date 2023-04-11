@@ -18,7 +18,7 @@ import type { Logger } from './Logger';
 // https://discord-api-types.dev/api/discord-api-types-v10/enum/GatewayIntentBits
 const IntentRequirements: Record<
   Exclude<GatewayIntentsString, 'GuildBans'>,
-  [adaptor: 'app' | 'guild', pattern: RegExp][] | undefined
+  [adapter: 'app' | 'guild', pattern: RegExp][] | undefined
 > = {
   AutoModerationConfiguration: undefined,
   AutoModerationExecution: undefined,
@@ -136,8 +136,8 @@ export class DiscordManager<Ready extends boolean = boolean> {
     }
     for (const [intent, events] of Object.entries(IntentRequirements)) {
       if (!events) continue;
-      for (const [adaptor, pattern] of events) {
-        if (!eventNames[adaptor].some((name) => name.match(pattern))) continue;
+      for (const [adapter, pattern] of events) {
+        if (!eventNames[adapter].some((name) => name.match(pattern))) continue;
         this.#intentNames.add(intent as GatewayIntentsString);
       }
     }

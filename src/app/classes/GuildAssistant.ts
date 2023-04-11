@@ -37,7 +37,7 @@ import { EventEmitter } from './EventEmitter';
 import type { GuildAudioReceiver } from './GuildAudioReceiver';
 import type { GuildVoiceChannel, JoinOptions } from './GuildVoiceChannel';
 import type { Logger } from './Logger';
-import type { AttachedCommand } from './PluginAdaptor';
+import type { AttachedCommand } from './PluginAdapter';
 import type { PluginContextOptions } from './PluginManager';
 
 const LeastPermissions: PermissionsString[] = [

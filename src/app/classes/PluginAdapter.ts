@@ -37,7 +37,7 @@ export type AttachedCommand = {
 
 export type PluginInterface = Record<string, Handler>;
 
-export abstract class PluginAdaptor<T extends PluginInterface> extends EventEmitter<Events<T>> {
+export abstract class PluginAdapter<T extends PluginInterface> extends EventEmitter<Events<T>> {
   abstract readonly locale: Locale;
   readonly dicts: Map<string, I18nDictionary> = new Map();
   readonly attachments: Map<string, AttachedPlugin> = new Map();

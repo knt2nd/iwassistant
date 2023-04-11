@@ -83,8 +83,8 @@ export class PluginManager {
     for (const key of Object.keys(this.#options)) {
       const plugin = this.#loader.get(key);
       if (!plugin) continue;
-      for (const [adaptor, names] of Object.entries(result)) {
-        const setup = (plugin as Record<string, unknown>)[`setup${capitalize(adaptor)}`];
+      for (const [adapter, names] of Object.entries(result)) {
+        const setup = (plugin as Record<string, unknown>)[`setup${capitalize(adapter)}`];
         if (!(setup instanceof Function)) continue;
         const matched = setup
           .toString() // it's not perfect but okay in most of cases
