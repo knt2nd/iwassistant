@@ -1,6 +1,6 @@
 import type { ClientEvents, PermissionsString } from 'discord.js';
 import { Events } from 'discord.js';
-import { capitalize, clone, uncapitalize } from '../utils';
+import { capitalize, uncapitalize } from '../utils';
 import type { App } from './App';
 import type { DiscordEventNames } from './DiscordManager';
 import type { GuildAssistant } from './GuildAssistant';
@@ -151,7 +151,7 @@ export class PluginManager {
         if (user.permissions) options.permissions = { ...options.permissions, ...user.permissions };
         if (user.i18n) options.i18n = { ...options.i18n, ...user.i18n };
       }
-      plugins.push({ ...plugin, ...clone(options) });
+      plugins.push({ ...plugin, ...structuredClone(options) });
     }
     return plugins;
   }

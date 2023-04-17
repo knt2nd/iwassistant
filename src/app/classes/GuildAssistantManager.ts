@@ -1,6 +1,6 @@
 import { createAudioPlayer, createAudioResource, entersState, joinVoiceChannel } from '@discordjs/voice';
 import type { Guild } from 'discord.js';
-import { clone, shortenId } from '../utils';
+import { shortenId } from '../utils';
 import type { App } from './App';
 import type { AssistantOptions } from './Assistant';
 import { Datastore } from './Datastore';
@@ -75,7 +75,7 @@ export class GuildAssistantManager {
         locale: options?.locale ?? this.#options?.[guild.id]?.locale ?? this.#options?.default?.locale ?? this.#locale,
         slash: options?.slash ?? this.#options?.[guild.id]?.slash ?? this.#options?.default?.slash ?? true,
       },
-      this.#assistantOptions ? clone(this.#assistantOptions) : {},
+      this.#assistantOptions ? structuredClone(this.#assistantOptions) : {},
       {
         data: new Datastore(`guild-${guild.id}`),
         log,

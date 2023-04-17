@@ -1,5 +1,4 @@
 export * from './capitalize';
-export * from './clone';
 export * from './configure';
 export * from './decodeMessage';
 export * from './formatDate';
