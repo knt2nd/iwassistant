@@ -1,4 +1,3 @@
-import { request } from 'undici';
 import { TranslationLanguages } from '../../locales';
 import { isTranslationLanguage } from '../../utils';
 
@@ -50,9 +49,9 @@ export const engine: IEngine<Config> = {
         url.searchParams.set('sl', from ?? 'auto');
         url.searchParams.set('tl', to);
         url.searchParams.set('q', text);
-        const { statusCode, body } = await request(url);
-        if (statusCode !== 200) throw new Error(`Google Translate: ${statusCode} ${url.toString()}`);
-        return { to, ...createResult(from, await body.json()) };
+        const res = await fetch(url);
+        if (res.status !== 200) throw new Error(`Google Translate: ${res.status} ${url.toString()}`);
+        return { to, ...createResult(from, await res.json()) };
       },
     };
   },

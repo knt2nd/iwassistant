@@ -1,4 +1,5 @@
-import { request } from 'undici';
+import { Readable } from 'node:stream';
+import type { ReadableStream } from 'node:stream/web';
 import { Locales } from '../../locales';
 
 const DefaultVoice = 'en-US';
@@ -104,9 +105,9 @@ export const engine: IEngine<Config> = {
         url.searchParams.set('ttsspeed', speed.toString());
         url.searchParams.set('textlen', text.length.toString());
         url.searchParams.set('q', text);
-        const { statusCode, body } = await request(url);
-        if (statusCode !== 200) throw new Error(`Google Translate TTS: ${statusCode} ${url.toString()}`);
-        return { voice, speed, pitch, text, resource: body };
+        const res = await fetch(url);
+        if (res.status !== 200 || !res.body) throw new Error(`Google Translate TTS: ${res.status} ${url.toString()}`);
+        return { voice, speed, pitch, text, resource: Readable.fromWeb(res.body as ReadableStream) };
       },
     };
   },
