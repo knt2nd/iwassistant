@@ -50,7 +50,7 @@ export const engine: IEngine<Config> = {
         url.searchParams.set('tl', to);
         url.searchParams.set('q', text);
         const res = await fetch(url);
-        if (res.status !== 200) throw new Error(`Google Translate: ${res.status} ${url.toString()}`);
+        if (!res.ok) throw new Error(`Google Translate: ${res.status} ${res.statusText} ${url.toString()}`);
         return { to, ...createResult(from, await res.json()) };
       },
     };

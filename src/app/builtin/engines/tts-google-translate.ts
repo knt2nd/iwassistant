@@ -106,7 +106,9 @@ export const engine: IEngine<Config> = {
         url.searchParams.set('textlen', text.length.toString());
         url.searchParams.set('q', text);
         const res = await fetch(url);
-        if (res.status !== 200 || !res.body) throw new Error(`Google Translate TTS: ${res.status} ${url.toString()}`);
+        if (!res.ok || !res.body) {
+          throw new Error(`Google Translate TTS: ${res.status} ${res.statusText} ${url.toString()}`);
+        }
         return { voice, speed, pitch, text, resource: Readable.fromWeb(res.body as ReadableStream) };
       },
     };
