@@ -49,10 +49,11 @@ export const plugin: IPlugin<Options> = {
             if (!message.reactions.cache.has(emojiId)) return;
             (async () => {
               const member = await assistant.guild.members.fetch(user.id);
+              const description = omitString(decodeMessage(message.content.replaceAll('\n', ' '), message), 20);
               const embed = new EmbedBuilder()
                 .setURL(message.url)
                 .setAuthor({ name: member.displayName, iconURL: member.displayAvatarURL() })
-                .setDescription(omitString(decodeMessage(message.content.replaceAll('\n', ' '), message), 20));
+                .setDescription(description.length > 0 ? description : '...');
               let title = `${assistant.guild.name}   ${message.channel.name}`;
               if (reaction.emoji.url) {
                 embed.setThumbnail(reaction.emoji.url);
