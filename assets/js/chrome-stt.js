@@ -13,10 +13,11 @@ class EventEmitter {
 class WebSocketClient extends EventEmitter {
   #ws = new WebSocket(`ws://${location.host}`);
 
-  constructor() {
+  constructor(initialize) {
     super();
     this.#ws.binaryType = 'arraybuffer';
     this.#ws.onerror = console.error;
+    this.#ws.onopen = initialize;
     this.#ws.onclose = () => this.emit('close');
     this.#ws.onmessage = (event) => this.emit('message', event.data);
   }
@@ -27,14 +28,16 @@ class WebSocketClient extends EventEmitter {
 }
 
 class AudioPlayer extends EventEmitter {
-  #context = new AudioContext();
-  #destination = this.#context.createMediaStreamDestination();
   #scheduledTime = 0;
   #fixed = false;
   #sources = [];
+  #context;
+  #destination;
 
-  get stream() {
-    return this.#destination.stream;
+  constructor({ context, destination }) {
+    super();
+    this.#context = context;
+    this.#destination = destination;
   }
 
   play(chunk) {
@@ -135,7 +138,9 @@ class SpeechToText extends EventEmitter {
   }
 }
 
-async function setupChrome(stream) {
+async function setupChrome() {
+  const context = new AudioContext();
+  const destination = context.createMediaStreamDestination();
   const audio = document.createElement('audio');
   const select = document.createElement('select');
   const button = document.createElement('button');
@@ -169,16 +174,20 @@ async function setupChrome(stream) {
   button.textContent = 'TEST';
   document.body.append(select);
   document.body.append(button);
-  audio.srcObject = stream;
+  audio.srcObject = destination.stream;
   audio.play();
   console.log('Devices:', allDevices);
-  return devices.map((d) => `${d.id === select.value ? '*' : '-'} ${d.label}`).join('\n');
+  return {
+    audio: { context, destination },
+    report: devices.map((d) => `${d.id === select.value ? '*' : '-'} ${d.label}`).join('\n'),
+  };
 }
 
 async function main() {
-  const player = new AudioPlayer();
+  const chrome = await setupChrome();
+  const player = new AudioPlayer(chrome.audio);
   const stt = new SpeechToText();
-  const ws = new WebSocketClient();
+  const ws = new WebSocketClient(() => ws.send('ready', chrome.report));
   player.on('end', () => stt.stop());
   stt.on('start', () => ws.send('start'));
   stt.on('stop', () => ws.send('stop'));
@@ -207,8 +216,6 @@ async function main() {
       }
     }
   });
-  const report = await setupChrome(player.stream);
-  ws.send('ready', report);
 }
 
 window.onload = () => void Promise.resolve().then(main).catch(console.error);
