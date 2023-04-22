@@ -53,11 +53,11 @@ export const plugin: IPlugin<Options> = {
     ];
     const prevTimes = new Map<string, number>();
     let cancelButton: MessageReaction | undefined;
-    const isSpeakable = (channelId: string): boolean => {
+    const isSpeakable = (channelId: string, member: GuildMember): boolean => {
       const current = assistant.voice;
       if (!current) return false;
-      const target = assistant.data.get('guild-config')?.voiceChannels?.[current.channelId]?.input ?? 'all';
-      return target === 'all' || target === channelId;
+      const target = assistant.data.get('guild-config')?.voiceChannels?.[current.channelId]?.input ?? 'joined';
+      return (target === 'joined' && current.channelId === member.voice.channelId) || target === channelId;
     };
     const speak = (content: string, member: GuildMember, message: Message<true>, to?: string): void => {
       const currentTime = Date.now();
@@ -104,9 +104,10 @@ export const plugin: IPlugin<Options> = {
     };
     return {
       async onMessageCreate(message) {
-        if (!isSpeakable(message.channel.id)) return;
+        if (!assistant.audioPlayer.active) return;
         if (!message.author.bot) {
           const member = message.member ?? (await assistant.guild.members.fetch(message.author.id));
+          if (!isSpeakable(message.channel.id, member)) return;
           speak(decodeMessage(message.content, message), member, message);
           return;
         }
@@ -119,13 +120,14 @@ export const plugin: IPlugin<Options> = {
         const to = url.searchParams.get('to');
         const userId = url.searchParams.get('user');
         if (!to || !userId) return;
+        const member = await assistant.guild.members.fetch(userId);
+        if (!isSpeakable(message.channel.id, member)) return;
         const length = embed.description.lastIndexOf('\n\n[🌐 ');
         const text = length === -1 ? embed.description : embed.description.slice(0, length);
-        const member = await assistant.guild.members.fetch(userId);
         speak(decodeMessage(text, assistant.guild), member, message, to);
       },
       onTranslationCreate({ response, source, destination, member }) {
-        if (!isSpeakable(destination.channel.id)) return;
+        if (!assistant.audioPlayer.active || !isSpeakable(destination.channel.id, member)) return;
         speak(decodeMessage(response.text, source), member, destination, response.to);
       },
       onMessageReactionAdd(reaction, user) {

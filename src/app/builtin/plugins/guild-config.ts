@@ -219,7 +219,7 @@ function configureVoiceChannels(
       input: {
         id: `${path}/input`,
         name: subDict.get('ttsInput'),
-        options: [{ value: 'all', label: subDict.get('all') }, ...channelOptions],
+        options: [{ value: 'joined', label: `👤 ${subDict.get('joinedMemberMessage')}` }, ...channelOptions],
       },
       join: {
         id: `${path}/join`,
@@ -231,7 +231,7 @@ function configureVoiceChannels(
       dictation: savedData?.dictation ? 'on' : 'off',
       stt: selectVoiceOptionValue(voiceOptions, savedData?.stt ?? assistant.defaultSTT),
       output: savedData?.output ?? 'self',
-      input: savedData?.input ?? 'all',
+      input: savedData?.input ?? 'joined',
       join: (savedData ? savedData.join : config.autoJoin) ? 'on' : 'off',
     },
     input,
@@ -332,7 +332,7 @@ export type Options = {
     ttsVoice: { type: 'simple' };
     ttsSpeed: { type: 'simple' };
     ttsPitch: { type: 'simple' };
-    all: { type: 'simple' };
+    joinedMemberMessage: { type: 'simple' };
   };
   data: {
     guild: {
@@ -405,14 +405,14 @@ export const plugin: IPlugin<Options> = {
         multilingualGroup: 'Join Multilingual Group',
         dictation: 'Dictation',
         sttType: 'Voice Recognition Type',
-        sttOutput: 'Voice Recognition Output Channel',
-        ttsInput: 'Text-to-Speech Input Channel',
+        sttOutput: 'Voice Recognition Output',
+        ttsInput: 'Text-to-Speech Input',
         autoJoin: 'Auto Join',
         notificationReaction: 'Notification - Reaction ',
         ttsVoice: 'Text-to-Speech - Voice',
         ttsSpeed: 'Text-to-Speech - Speed',
         ttsPitch: 'Text-to-Speech - Pitch',
-        all: 'ALL',
+        joinedMemberMessage: 'Joined Member Message',
       },
     },
     ja: {
@@ -442,14 +442,14 @@ export const plugin: IPlugin<Options> = {
         multilingualGroup: '多言語グループに参加',
         dictation: '議事録',
         sttType: '音声認識タイプ',
-        sttOutput: '音声認識出力チャンネル',
-        ttsInput: '読み上げ入力チャンネル',
+        sttOutput: '音声認識出力',
+        ttsInput: '読み上げ入力',
         autoJoin: '自動入室',
         notificationReaction: '通知 - リアクション',
         ttsVoice: '読み上げ - 音声',
         ttsSpeed: '読み上げ - 速さ',
         ttsPitch: '読み上げ - 高さ',
-        all: 'すべて',
+        joinedMemberMessage: '参加メンバーの投稿',
       },
     },
     'zh-CN': {
@@ -479,14 +479,14 @@ export const plugin: IPlugin<Options> = {
         multilingualGroup: '加入多语言群',
         dictation: '听写',
         sttType: '语音识别型',
-        sttOutput: '语音识别输出频道',
-        ttsInput: '朗读输入频道',
+        sttOutput: '语音识别输出',
+        ttsInput: '朗读输入',
         autoJoin: '自动加入',
         notificationReaction: '通知 - 反应',
         ttsVoice: '朗读 - 语音',
         ttsSpeed: '朗读 - 速度',
         ttsPitch: '朗读 - 音高',
-        all: '全部',
+        joinedMemberMessage: '加入成员的信息',
       },
     },
     'zh-TW': {
@@ -516,14 +516,14 @@ export const plugin: IPlugin<Options> = {
         multilingualGroup: '加入多語言群',
         dictation: '聽寫',
         sttType: '語音識別型',
-        sttOutput: '語音識別輸出頻道',
-        ttsInput: '朗讀輸入頻道',
+        sttOutput: '語音識別輸出',
+        ttsInput: '朗讀輸入',
         autoJoin: '自動加入',
         notificationReaction: '通知 - 反應',
         ttsVoice: '朗讀 - 語音',
         ttsSpeed: '朗讀 - 速度',
         ttsPitch: '朗讀 - 音高',
-        all: '全部',
+        joinedMemberMessage: '加入成員的信息',
       },
     },
   },
