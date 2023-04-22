@@ -59,8 +59,8 @@ function createRangeOptions(min: number, max = -1): SelectOption[] {
 
 function createSwitchOptions(): SelectOption[] {
   return [
-    { value: 'off', label: '☐' },
-    { value: 'on', label: '🗹' },
+    { value: 'off', label: 'OFF' },
+    { value: 'on', label: 'ON' },
   ];
 }
 
