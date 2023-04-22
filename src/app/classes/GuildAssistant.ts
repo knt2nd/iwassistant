@@ -338,6 +338,7 @@ export class GuildAssistant extends Assistant<GuildAssistantInterface> {
 
   #runCommandByInteraction(command: AttachedCommand, source: ChatInputCommandInteraction<'cached'>): void {
     if (!source.channel) return;
+    const member = source.member;
     const log = (result: string): string => `Slash command ${result}: ${source.user.id} -> /${command.id}`;
     const options = Object.fromEntries(source.options.data.map((option) => [option.name, `${option.value as string}`]));
     const event: CommandEvent<'guild'> = {
@@ -345,13 +346,13 @@ export class GuildAssistant extends Assistant<GuildAssistantInterface> {
       locale: source.locale,
       options,
       source,
-      member: source.member,
+      member,
       channel: source.channel,
       notified: false,
       notify: async (result = 'success') => {
         if (event.notified) return;
         event.notified = true;
-        this.beep(result);
+        this.beep(result, member);
         const emoji = CommandResultEmoji[result];
         await (source.replied ? source.followUp(emoji) : source.reply(emoji));
       },
@@ -371,63 +372,65 @@ export class GuildAssistant extends Assistant<GuildAssistantInterface> {
       this.log.info(log(result), options);
     })().catch((error) => {
       if (!source.replied) source.reply(CommandResultEmoji.failure).catch(this.log.error);
-      this.beep('failure');
+      this.beep('failure', member);
       this.log.error(log('error'), options, error);
     });
   }
 
   #runCommandByMessage(command: InterpretedCommand, source: Message<true>): void {
-    const log = (result: string): string => `Text command ${result}: ${source.author.id} -> /${command.id}`;
     (async () => {
       const member = source.member ?? (await this.guild.members.fetch(source.author.id));
-      if (!member.permissions.has(command.plugin.permissions[command.name] ?? [])) {
-        source.react(CommandResultEmoji.forbidden).catch(this.log.error);
-        this.beep('failure');
-        this.log.warn(log('forbidden'), command.options);
-        return;
-      }
-      const event: CommandEvent<'guild'> = {
-        type: 'text',
-        locale: command.locale,
-        options: command.options,
-        script: command.script,
-        source,
-        member,
-        channel: source.channel,
-        notified: false,
-        notify: async (result = 'success') => {
-          if (event.notified) return;
-          event.notified = true;
-          this.beep(result);
-          await source.react(CommandResultEmoji[result]);
-        },
-        reply: async (options, result = 'success') => {
-          await event.notify(result);
-          return source.reply(options);
-        },
-      };
-      const result = (await command.execute(event)) === false ? 'failure' : 'success';
-      event.notify(result).catch(this.log.error);
-      this.log.info(log(result), command.options);
-    })().catch((error) => {
-      source.react(CommandResultEmoji.failure).catch(this.log.error);
-      this.beep('failure');
-      this.log.error(log('error'), command.options, error);
-    });
+      const log = (result: string): string => `Text command ${result}: ${source.author.id} -> /${command.id}`;
+      (async () => {
+        if (!member.permissions.has(command.plugin.permissions[command.name] ?? [])) {
+          source.react(CommandResultEmoji.forbidden).catch(this.log.error);
+          this.beep('failure', member);
+          this.log.warn(log('forbidden'), command.options);
+          return;
+        }
+        const event: CommandEvent<'guild'> = {
+          type: 'text',
+          locale: command.locale,
+          options: command.options,
+          script: command.script,
+          source,
+          member,
+          channel: source.channel,
+          notified: false,
+          notify: async (result = 'success') => {
+            if (event.notified) return;
+            event.notified = true;
+            this.beep(result, member);
+            await source.react(CommandResultEmoji[result]);
+          },
+          reply: async (options, result = 'success') => {
+            await event.notify(result);
+            return source.reply(options);
+          },
+        };
+        const result = (await command.execute(event)) === false ? 'failure' : 'success';
+        event.notify(result).catch(this.log.error);
+        this.log.info(log(result), command.options);
+      })().catch((error) => {
+        source.react(CommandResultEmoji.failure).catch(this.log.error);
+        this.beep('failure', member);
+        this.log.error(log('error'), command.options, error);
+      });
+    })().catch(this.log.error);
   }
 
   #runCommandByAudio(command: InterpretedCommand, source: RecognizableAudio<'guild'>): void {
-    const log = (result: string): string => `Voice command ${result}: ${member.id} -> /${command.id}`;
     const member = source.member;
+    const log = (result: string): string => `Voice command ${result}: ${member.id} -> /${command.id}`;
     if (!member.permissions.has(command.plugin.permissions[command.name] ?? [])) {
-      this.beep('failure');
+      this.beep('failure', member);
       this.log.warn(log('forbidden'), command.options);
       return;
     }
     let message: Message<true> | undefined;
     const notify = async (result: 'success' | 'failure'): Promise<Message<true>> => {
       if (message) return message;
-      this.beep(result);
+      this.beep(result, member);
       const emoji = CommandResultEmoji[result];
       return (message = await source.destination.send(`${userMention(member.id)} \`/${command.id}\` ${emoji}`));
     };
@@ -456,9 +459,18 @@ export class GuildAssistant extends Assistant<GuildAssistantInterface> {
       event.notify(result).catch(this.log.error);
       this.log.info(log(result), command.options);
     })().catch((error) => {
-      this.beep('failure');
+      this.beep('failure', member);
       this.log.error(log('error'), command.options, error);
     });
+  }
+
+  override beep(soundName: Parameters<Assistant<{}>['beep']>[0], member?: GuildMember): boolean {
+    if (member) {
+      const memberChannelId = member.voice.channelId;
+      const selfChannelId = this.#voiceChannel.joinConfig?.channelId;
+      if (!memberChannelId || !selfChannelId || memberChannelId !== selfChannelId) return false;
+    }
+    return super.beep(soundName);
   }
 
   async join(options: string | { channelId: string; selfDeaf?: boolean; selfMute?: boolean }): Promise<boolean> {
