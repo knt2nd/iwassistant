@@ -57,7 +57,7 @@ export const plugin: IPlugin<Options> = {
       const current = assistant.voice;
       if (!current) return false;
       const target = assistant.data.get('guild-config')?.voiceChannels?.[current.channelId]?.input ?? 'joined';
-      return (target === 'joined' && current.channelId === member.voice.channelId) || target === channelId;
+      return target === 'joined' ? current.channelId === member.voice.channelId : target === channelId;
     };
     const speak = (content: string, member: GuildMember, message: Message<true>, to?: string): void => {
       const currentTime = Date.now();
