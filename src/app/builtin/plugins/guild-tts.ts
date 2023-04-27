@@ -1,5 +1,5 @@
 import type { GuildMember, Message, MessageReaction } from 'discord.js';
-import { decodeMessage, isLocale } from '../../utils';
+import { decodeMessage, isLocale, isRegionLocale, toLanguage } from '../../utils';
 
 // Note: Some TTS engines don't read some emojis but it should notify when someone posts a short emoji message somehow
 const EmojiOnly = /^(\p{Emoji_Modifier_Base}\p{Emoji_Modifier}?|\p{Emoji_Presentation}|\p{Emoji}\uFE0F)$/u;
@@ -11,13 +11,19 @@ const CancelEmoji = '⏭';
 export type Options = {
   config: {
     /**
-     * Strippers for messages
+     * Strippers
      */
     strippers: [pattern: string, flag: string][];
     /**
-     * Replacers for messages
+     * Global replacers
      */
     replacers: ([pattern: string, replacement: string] | [pattern: string, replacement: string, flag: string])[];
+    /**
+     * I18n replacers
+     */
+    i18nReplacers: I18n<
+      ([pattern: string, replacement: string] | [pattern: string, replacement: string, flag: string])[]
+    >;
     /**
      * Nameless time
      * @default 3_600_000
@@ -38,10 +44,18 @@ export const plugin: IPlugin<Options> = {
       ['^>+ ', 'gm'], // quote
     ],
     replacers: [['https?://[!#$%&()+,./:=?@\\w~-]+', 'URL']],
+    i18nReplacers: {
+      ja: [
+        ['iwassistant', 'イワシスタント'],
+        ['ｗ', 'わら'],
+      ],
+    },
     nameless: 60 * 60 * 1000,
   },
   setupGuild({ config, assistant }) {
-    const replacers = [
+    let cancelButton: MessageReaction | undefined;
+    const prevTimes = new Map<string, number>();
+    const globalReplacers = [
       ...config.strippers.map(([pattern, flag]) => ({
         pattern: new RegExp(pattern, flag),
         replacement: '',
@@ -51,19 +65,40 @@ export const plugin: IPlugin<Options> = {
         replacement,
       })),
     ];
-    const prevTimes = new Map<string, number>();
-    let cancelButton: MessageReaction | undefined;
+    const i18nReplacers = Object.fromEntries(
+      Object.entries(config.i18nReplacers).map(([locale, replacers]) => [
+        locale,
+        replacers.map(([pattern, replacement, flag]) => ({
+          pattern: new RegExp(pattern, flag ?? 'gi'),
+          replacement,
+        })),
+      ]),
+    ) as I18n<{ pattern: RegExp; replacement: string }[]>;
+    const replace = (text: string, locale: Locale): string => {
+      for (const replacer of globalReplacers) {
+        text = text.replace(replacer.pattern, replacer.replacement);
+      }
+      const localeReplacers = i18nReplacers[locale];
+      if (localeReplacers) {
+        for (const replacer of localeReplacers) {
+          text = text.replace(replacer.pattern, replacer.replacement);
+        }
+      }
+      if (isRegionLocale(locale)) {
+        const langReplacers = i18nReplacers[toLanguage(locale)];
+        if (langReplacers) {
+          for (const replacer of langReplacers) {
+            text = text.replace(replacer.pattern, replacer.replacement);
+          }
+        }
+      }
+      return text;
+    };
     const isSpeakable = (channelId: string, member: GuildMember): boolean => {
       const current = assistant.voice;
       if (!current) return false;
       const target = assistant.data.get('guild-config')?.voiceChannels?.[current.channelId]?.input ?? 'joined';
       return target === 'joined' ? current.channelId === member.voice.channelId : target === channelId;
-    };
-    const replace = (text: string): string => {
-      for (const replacer of replacers) {
-        text = text.replace(replacer.pattern, replacer.replacement);
-      }
-      return text;
     };
     const speak = (text: string, member: GuildMember, source: Message<true>, to?: string): void => {
       const options = { ...(assistant.data.get('guild-config')?.users?.[member.id]?.tts ?? assistant.defaultTTS) };
@@ -93,7 +128,7 @@ export const plugin: IPlugin<Options> = {
       beforeSpeak(speech) {
         const request = speech.request;
         if (!speech.message) {
-          request.text = replace(request.text);
+          request.text = replace(request.text, speech.locale);
           return;
         }
         const source = speech.message.source;
@@ -104,7 +139,7 @@ export const plugin: IPlugin<Options> = {
         if (!nameless || request.text.length === 0 || EmojiOnly.test(request.text)) {
           request.text = `${member.displayName}, ${request.text}`;
         }
-        request.text = replace(request.text);
+        request.text = replace(request.text, speech.locale);
         speech.once('start', async () => {
           if (request.text.length < CancelableLength) return;
           cancelButton = await source.react(CancelEmoji);

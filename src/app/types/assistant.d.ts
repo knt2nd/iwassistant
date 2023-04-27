@@ -20,6 +20,7 @@ type PlayableSpeech<T extends AssistantType = AssistantType> = PlayableAudio &
         };
       }
     : {}) & {
+    readonly locale: Locale;
     readonly request: TTSRequest;
     readonly response: TTSResponse | undefined;
   };

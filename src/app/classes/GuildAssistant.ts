@@ -542,39 +542,46 @@ export class GuildAssistant extends Assistant<GuildAssistantInterface> {
   createSpeech(options: CreateSpeechOptions): PlayableSpeech<'guild'> {
     const tts = this.engines.getTTS(options.engine);
     this.fallbackVoice(tts, options);
-    const speech = new PlayableSpeechImpl(
-      async (request) => {
+    const speechOptions: PlayableSpeechOptions = {
+      generator: async (request) => {
         await this.hook('speak', speech);
         if (request.text.length === 0) return { ...request, resource: this.createEmptyAudioResource() };
         return tts.generate(request);
       },
-      options.request,
-      options.message,
-      this.log.error,
-    );
+      locale: options.engine.locale,
+      request: options.request,
+      errorHandler: this.log.error,
+    };
+    if (options.message) speechOptions.message = options.message;
+    const speech = new PlayableSpeechImpl(speechOptions);
     return speech;
   }
 }
+
+type PlayableSpeechOptions = {
+  generator: (request: TTSRequest) => Promise<TTSResponse>;
+  locale: Locale;
+  request: TTSRequest;
+  message?: PlayableSpeechMessage;
+  errorHandler: ErrorHandler;
+};
 
 class PlayableSpeechImpl
   extends EventEmitter<{ error: [error: unknown]; ready: [] }>
   implements PlayableSpeech<'guild'>
 {
   readonly #generator: (request: TTSRequest) => Promise<TTSResponse>;
+  readonly locale: Locale;
   readonly request: TTSRequest;
   response: TTSResponse | undefined;
   readonly message?: PlayableSpeechMessage;
 
-  constructor(
-    generator: (request: TTSRequest) => Promise<TTSResponse>,
-    request: TTSRequest,
-    message: PlayableSpeechMessage | undefined,
-    errorHandler: ErrorHandler,
-  ) {
-    super(errorHandler);
-    this.#generator = generator;
-    this.request = request;
-    if (message) this.message = message;
+  constructor(options: PlayableSpeechOptions) {
+    super(options.errorHandler);
+    this.#generator = options.generator;
+    this.locale = options.locale;
+    this.request = options.request;
+    if (options.message) this.message = options.message;
   }
 
   get resource(): Readable | undefined {
