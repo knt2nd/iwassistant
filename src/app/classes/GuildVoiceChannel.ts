@@ -10,6 +10,7 @@ import type {
 } from '@discordjs/voice';
 import { AudioPlayerStatus, NoSubscriberBehavior, VoiceConnectionStatus } from '@discordjs/voice';
 import { capitalize, omitObject, shortenId } from '../utils';
+import type { IAudioPlayer } from './Assistant';
 import { EventEmitter } from './EventEmitter';
 
 const ConnectTimeout = 5000;
@@ -217,7 +218,6 @@ export class GuildVoiceChannel extends EventEmitter<Events> implements IAudioPla
   }
 
   #startToPlay(audio: PlayableAudio): void {
-    audio.emit('start');
     if (audio.resource) {
       this.#debug?.('audio', 'Already', debugAudio(audio));
       this.#tryToPlay(audio);
@@ -245,6 +245,7 @@ export class GuildVoiceChannel extends EventEmitter<Events> implements IAudioPla
 
   #tryToPlay(audio: PlayableAudio): void {
     if (!this.#current) return;
+    audio.emit('start');
     try {
       if (!audio.resource) throw new Error('No resource');
       this.#current.player.play(this.#di.createAudioResource(audio.resource));

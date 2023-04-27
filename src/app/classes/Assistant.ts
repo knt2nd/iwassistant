@@ -33,20 +33,17 @@ type CommandInterpreter = AttachedCommand & {
   parsers: Map<Locale, { pattern: RegExp; options: Record<string, number> }[]>;
 };
 
+export type IAudioPlayer = {
+  readonly active: boolean;
+  play(audio: PlayableAudio): boolean;
+  next(): boolean;
+  stop(): boolean;
+};
+
 export type InterpretedCommand = AttachedCommand & {
   locale: Locale;
   options: Record<string, string>;
   script: string;
-};
-
-export type TranscribeOptions = {
-  engine: { name: string; locale: Locale };
-  request: STTRequest;
-};
-
-export type CreateSpeechOptions = {
-  engine: { name: string; locale: Locale };
-  request: TTSRequest;
 };
 
 export type AssistantOptions = {
@@ -74,8 +71,6 @@ export abstract class Assistant<T extends PluginInterface> extends PluginAdapter
   abstract readonly log: Logger;
   abstract readonly engines: EngineManager;
   abstract readonly audioPlayer: IAudioPlayer;
-  abstract run(options: { command: InterpretedCommand; source: RecognizableAudio }): void;
-  abstract createSpeech(options: CreateSpeechOptions): PlayableSpeech;
   readonly defaultTTS: { name: string; locale: Locale; voice: string; speed: number; pitch: number };
   readonly defaultSTT: { name: string; locale: Locale; voice: string };
   readonly activation: { examples: I18n<string>; pattern: RegExp };
@@ -202,26 +197,6 @@ export abstract class Assistant<T extends PluginInterface> extends PluginAdapter
       return Promise.resolve(resource);
     });
     return this.audioPlayer.play(audio);
-  }
-
-  speak(options: string | CreateSpeechOptions): boolean {
-    if (!this.audioPlayer.active) return false;
-    if (typeof options === 'string') {
-      options = {
-        engine: {
-          name: this.defaultTTS.name,
-          locale: this.defaultTTS.locale,
-        },
-        request: {
-          voice: this.defaultTTS.voice,
-          speed: this.defaultTTS.speed,
-          pitch: this.defaultTTS.pitch,
-          text: options,
-        },
-      };
-    }
-    const speech = this.createSpeech(options);
-    return this.audioPlayer.play(speech);
   }
 
   createAudio(generator: () => Promise<Readable>): PlayableAudio {

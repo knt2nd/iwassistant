@@ -29,7 +29,7 @@ import { createHash } from 'node:crypto';
 import type { Readable } from 'node:stream';
 import { toLanguage } from '../utils';
 import type { App } from './App';
-import type { AssistantOptions, CreateSpeechOptions, InterpretedCommand, TranscribeOptions } from './Assistant';
+import type { AssistantOptions, IAudioPlayer, InterpretedCommand } from './Assistant';
 import { Assistant } from './Assistant';
 import type { Datastore } from './Datastore';
 import type { EngineManager } from './EngineManager';
@@ -66,6 +66,17 @@ enum Status {
 }
 
 type PlayableSpeechMessage = Exclude<PlayableSpeech<'guild'>['message'], undefined>;
+
+type CreateSpeechOptions = {
+  engine: { name: string; locale: Locale };
+  request: TTSRequest;
+  message?: PlayableSpeechMessage;
+};
+
+type TranscribeOptions = {
+  engine: { name: string; locale: Locale };
+  request: STTRequest;
+};
 
 export type GuildAssistantInterface = {
   beforeCommandsUpdate(commands: (SlashCommandBuilder | ContextMenuCommandBuilder)[]): Awaitable<void>;
@@ -321,7 +332,7 @@ export class GuildAssistant extends Assistant<GuildAssistantInterface> {
     options:
       | { type: 'interaction'; command: AttachedCommand; source: ChatInputCommandInteraction<'cached'> }
       | { type: 'message'; command: InterpretedCommand; source: Message<true> }
-      | { type?: undefined; command: InterpretedCommand; source: RecognizableAudio },
+      | { type: 'audio'; command: InterpretedCommand; source: RecognizableAudio },
   ): void {
     switch (options.type) {
       case 'interaction': {
@@ -330,7 +341,7 @@ export class GuildAssistant extends Assistant<GuildAssistantInterface> {
       case 'message': {
         return this.#runCommandByMessage(options.command, options.source);
       }
-      default: {
+      case 'audio': {
         return this.#runCommandByAudio(options.command, options.source as RecognizableAudio<'guild'>);
       }
     }
@@ -508,7 +519,27 @@ export class GuildAssistant extends Assistant<GuildAssistantInterface> {
     return stt.transcribe(options.request);
   }
 
-  createSpeech(options: CreateSpeechOptions & { message?: PlayableSpeechMessage }): PlayableSpeech<'guild'> {
+  speak(options: string | CreateSpeechOptions): boolean {
+    if (!this.audioPlayer.active) return false;
+    if (typeof options === 'string') {
+      options = {
+        engine: {
+          name: this.defaultTTS.name,
+          locale: this.defaultTTS.locale,
+        },
+        request: {
+          voice: this.defaultTTS.voice,
+          speed: this.defaultTTS.speed,
+          pitch: this.defaultTTS.pitch,
+          text: options,
+        },
+      };
+    }
+    const speech = this.createSpeech(options);
+    return this.audioPlayer.play(speech);
+  }
+
+  createSpeech(options: CreateSpeechOptions): PlayableSpeech<'guild'> {
     const tts = this.engines.getTTS(options.engine);
     this.fallbackVoice(tts, options);
     const speech = new PlayableSpeechImpl(

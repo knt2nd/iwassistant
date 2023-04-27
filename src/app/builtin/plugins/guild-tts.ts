@@ -59,21 +59,19 @@ export const plugin: IPlugin<Options> = {
       const target = assistant.data.get('guild-config')?.voiceChannels?.[current.channelId]?.input ?? 'joined';
       return target === 'joined' ? current.channelId === member.voice.channelId : target === channelId;
     };
-    const speak = (content: string, member: GuildMember, message: Message<true>, to?: string): void => {
-      const currentTime = Date.now();
-      const nameless = currentTime - (prevTimes.get(member.id) ?? 0) < config.nameless;
-      prevTimes.set(member.id, currentTime);
+    const replace = (text: string): string => {
+      for (const replacer of replacers) {
+        text = text.replace(replacer.pattern, replacer.replacement);
+      }
+      return text;
+    };
+    const speak = (text: string, member: GuildMember, source: Message<true>, to?: string): void => {
       const options = { ...(assistant.data.get('guild-config')?.users?.[member.id]?.tts ?? assistant.defaultTTS) };
       if (to) {
         options.locale = isLocale(to) ? to : 'en';
         options.voice = '';
       }
-      let text = content;
-      for (const replacer of replacers) {
-        text = text.replace(replacer.pattern, replacer.replacement);
-      }
-      if (!nameless || text.length === 0 || EmojiOnly.test(text)) text = `${member.displayName}, ${text}`;
-      const speech = assistant.createSpeech({
+      assistant.speak({
         engine: {
           name: options.name,
           locale: options.locale,
@@ -85,24 +83,39 @@ export const plugin: IPlugin<Options> = {
           text,
         },
         message: {
-          source: message,
+          source,
           member,
-          content,
+          content: text,
         },
       });
-      speech.once('start', async () => {
-        if (speech.request.text.length < CancelableLength) return;
-        cancelButton = await message.react(CancelEmoji);
-      });
-      speech.once('end', () => {
-        if (!cancelButton) return;
-        const button = cancelButton;
-        cancelButton = undefined;
-        button.remove().catch((error) => speech.emit('error', error));
-      });
-      assistant.audioPlayer.play(speech);
     };
     return {
+      beforeSpeak(speech) {
+        const request = speech.request;
+        if (!speech.message) {
+          request.text = replace(request.text);
+          return;
+        }
+        const source = speech.message.source;
+        const member = speech.message.member;
+        const currentTime = Date.now();
+        const nameless = currentTime - (prevTimes.get(member.id) ?? 0) < config.nameless;
+        prevTimes.set(member.id, currentTime);
+        if (!nameless || request.text.length === 0 || EmojiOnly.test(request.text)) {
+          request.text = `${member.displayName}, ${request.text}`;
+        }
+        request.text = replace(request.text);
+        speech.once('start', async () => {
+          if (request.text.length < CancelableLength) return;
+          cancelButton = await source.react(CancelEmoji);
+        });
+        speech.once('end', () => {
+          if (!cancelButton) return;
+          const button = cancelButton;
+          cancelButton = undefined;
+          button.remove().catch((error) => speech.emit('error', error));
+        });
+      },
       async onMessageCreate(message) {
         if (!assistant.audioPlayer.active) return;
         if (!message.author.bot) {

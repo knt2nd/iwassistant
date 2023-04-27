@@ -45,13 +45,6 @@ type RecognizableAudio<T extends AssistantType = AssistantType> = (T extends 'gu
     result: [transcript: string, isFinal: boolean];
   }>;
 
-type IAudioPlayer = {
-  readonly active: boolean;
-  play(audio: PlayableAudio): boolean;
-  next(): boolean;
-  stop(): boolean;
-};
-
 type CommandEvent<
   T extends AssistantType = AssistantType,
   U extends Record<string, string> = Record<string, string>,

@@ -2,7 +2,7 @@
 
 import type { Readable } from 'node:stream';
 import type { App } from './App';
-import type { AssistantOptions, CreateSpeechOptions } from './Assistant';
+import type { AssistantOptions, IAudioPlayer } from './Assistant';
 import { Assistant } from './Assistant';
 import type { Datastore } from './Datastore';
 import type { EngineManager } from './EngineManager';
@@ -16,6 +16,11 @@ enum Status {
   destroying,
   destroyed,
 }
+
+type CreateSpeechOptions = {
+  engine: { name: string; locale: Locale };
+  request: TTSRequest;
+};
 
 export type HomeAssistantInterface = {
   beforeTranscribe(request: STTRequest<'home'>): Awaitable<void>;
@@ -69,6 +74,26 @@ export class HomeAssistant extends Assistant<HomeAssistantInterface> {
   }
 
   run(): void {}
+
+  speak(options: string | CreateSpeechOptions): boolean {
+    if (!this.audioPlayer.active) return false;
+    if (typeof options === 'string') {
+      options = {
+        engine: {
+          name: this.defaultTTS.name,
+          locale: this.defaultTTS.locale,
+        },
+        request: {
+          voice: this.defaultTTS.voice,
+          speed: this.defaultTTS.speed,
+          pitch: this.defaultTTS.pitch,
+          text: options,
+        },
+      };
+    }
+    const speech = this.createSpeech(options);
+    return this.audioPlayer.play(speech);
+  }
 
   createSpeech(options: CreateSpeechOptions): PlayableSpeech<'home'> {
     const tts = this.engines.getTTS(options.engine);

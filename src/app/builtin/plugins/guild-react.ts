@@ -136,12 +136,28 @@ export const plugin: IPlugin<Options> = {
         // > This method automatically stops typing after 10 seconds, or when a message is sent.
         await message.channel.sendTyping();
         await sleep(typingTime < 10_000 ? typingTime : 10_000);
-        const sentMessage = await message.channel.send(text);
+        const source = await message.channel.send(text);
         const voiceChannelId = assistant.voice?.channelId;
         if (voiceChannelId) {
           const target = assistant.data.get('guild-config')?.voiceChannels?.[voiceChannelId]?.input ?? 'joined';
           if (target === 'joined' ? voiceChannelId === member.voice.channelId : target === message.channelId) {
-            assistant.speak(decodeMessage(sentMessage.content, sentMessage));
+            assistant.speak({
+              engine: {
+                name: assistant.defaultTTS.name,
+                locale: assistant.defaultTTS.locale,
+              },
+              request: {
+                voice: assistant.defaultTTS.voice,
+                speed: assistant.defaultTTS.speed,
+                pitch: assistant.defaultTTS.pitch,
+                text: decodeMessage(source.content, source),
+              },
+              message: {
+                source,
+                member: assistant.self,
+                content: source.content,
+              },
+            });
           }
         }
       }
