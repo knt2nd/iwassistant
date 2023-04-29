@@ -148,7 +148,7 @@ export const plugin: IPlugin<Options> = {
           if (!cancelButton) return;
           const button = cancelButton;
           cancelButton = undefined;
-          button.remove().catch((error) => speech.emit('error', error));
+          button.remove().catch(() => {});
         });
       },
       async onMessageCreate(message) {
