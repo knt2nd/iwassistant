@@ -234,7 +234,7 @@ export class GuildVoiceChannel extends EventEmitter<Events> implements IAudioPla
       this.#debug?.('audio', 'Ready', debugAudio(audio));
       this.#tryToPlay(audio);
     };
-    audio.on('error', (error) => {
+    audio.once('error', (error) => {
       clearTimeout(timer);
       audio.off('ready', onReady);
       this.#onPlayed();
