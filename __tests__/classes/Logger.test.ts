@@ -1,4 +1,4 @@
-import { Logger } from '../../src/app/classes/Logger';
+import { Logger } from '../../src/app/classes';
 
 const console = {} as Console;
 

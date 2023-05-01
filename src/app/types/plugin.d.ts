@@ -5,14 +5,12 @@ type PluginOptions = {
   data?: Partial<Record<'app' | 'guild' | 'home', BasicObject>>;
 };
 
-type AppHandlers = Partial<import('../classes/App').AppInterface>;
+type AppHandlers = Partial<import('../classes').AppInterface>;
 
-type GuildHandlers<T extends PluginOptions = {}> = Partial<
-  import('../classes/GuildAssistant').GuildAssistantInterface
-> &
+type GuildHandlers<T extends PluginOptions = {}> = Partial<import('../classes').GuildAssistantInterface> &
   CommandHandlers<T, 'guild'>;
 
-type HomeHandlers<T extends PluginOptions = {}> = Partial<import('../classes/HomeAssistant').HomeAssistantInterface> &
+type HomeHandlers<T extends PluginOptions = {}> = Partial<import('../classes').HomeAssistantInterface> &
   CommandHandlers<T, 'home'>;
 
 type CommandHandlers<T extends PluginOptions, U extends 'guild' | 'home'> = {
@@ -32,19 +30,14 @@ type SetupContext<T extends PluginOptions, U extends 'app' | 'guild' | 'home'> =
   config: T['config'] extends object ? T['config'] : {};
   dict: SetupContextDictionary<T>;
   data: T['data'] extends object ? { [P in keyof T['data'][U]]?: T['data'][U][P] } : {};
-  app: import('../classes/App').App;
+  app: import('../classes').App;
 } & (U extends 'app'
   ? {}
   : {
-      assistant: U extends 'guild'
-        ? import('../classes/GuildAssistant').GuildAssistant
-        : import('../classes/HomeAssistant').HomeAssistant;
+      assistant: U extends 'guild' ? import('../classes').GuildAssistant : import('../classes').HomeAssistant;
     });
 
-type SetupContextDictionary<T extends PluginOptions> = Omit<
-  import('../classes/I18nDictionary').I18nDictionary,
-  'get' | 'sub'
-> & {
+type SetupContextDictionary<T extends PluginOptions> = Omit<import('../classes').I18nDictionary, 'get' | 'sub'> & {
   sub(locale: Locale): SetupContextDictionary<T>;
   get<P extends keyof T['dict']>(
     ...args: T['dict'][P] extends { options: string }

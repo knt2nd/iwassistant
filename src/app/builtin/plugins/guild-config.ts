@@ -7,7 +7,7 @@ import type {
   VoiceChannel,
 } from 'discord.js';
 import { ChannelType, EmbedBuilder } from 'discord.js';
-import type { GuildAssistant } from '../../classes/GuildAssistant';
+import type { GuildAssistant } from '../../classes';
 import { Locales, TranslationLanguages } from '../../locales';
 import { configure, isLocale, isTranslationLanguage, toLanguage, toTranslationLanguage } from '../../utils';
 

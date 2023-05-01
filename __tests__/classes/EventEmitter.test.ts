@@ -1,4 +1,4 @@
-import { EventEmitter } from '../../src/app/classes/EventEmitter';
+import { EventEmitter } from '../../src/app/classes';
 import { sleep } from '../../src/app/utils';
 
 class EE extends EventEmitter<Record<string, unknown[]>> {}

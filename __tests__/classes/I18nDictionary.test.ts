@@ -1,4 +1,4 @@
-import { I18nDictionary } from '../../src/app/classes/I18nDictionary';
+import { I18nDictionary } from '../../src/app/classes';
 
 const fixture = {
   en: {

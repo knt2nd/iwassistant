@@ -1,3 +1,3 @@
-import { App } from './classes/App';
+import { App } from './classes';
 
 App.launch();

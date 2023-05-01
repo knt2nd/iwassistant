@@ -56,7 +56,7 @@ type ISpeechToText = {
 
 type CreateEngineContext<T> = {
   config: T extends object ? T : {};
-  app: import('../classes/App').App;
+  app: import('../classes').App;
 };
 
 type IEngine<T extends BasicObject | undefined = undefined> = { description: string } & (T extends object

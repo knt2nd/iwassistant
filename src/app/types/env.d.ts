@@ -6,29 +6,29 @@ type Env = {
   /**
    * Discord settings
    */
-  discord?: import('../classes/DiscordManager').DiscordManagerOptions;
+  discord?: import('../classes').DiscordManagerOptions;
   /**
    * Logger settings
    */
-  log?: import('../classes/Logger').LoggerOptions;
+  log?: import('../classes').LoggerOptions;
   /**
    * Engine settings
    */
-  engines: import('../classes/EngineManager').EngineManagerOptions;
+  engines: import('../classes').EngineManagerOptions;
   /**
    * Plugin settings
    */
-  plugins: import('../classes/PluginManager').PluginManagerOptions;
+  plugins: import('../classes').PluginManagerOptions;
   /**
    * Assistant settings
    */
-  assistant?: import('../classes/Assistant').AssistantOptions;
+  assistant?: import('../classes').AssistantOptions;
   /**
    * Guild settings
    */
-  guilds?: import('../classes/GuildAssistantManager').GuildAssistantManagerOptions;
+  guilds?: import('../classes').GuildAssistantManagerOptions;
   /**
    * Home settings
    */
-  home?: import('../classes/HomeAssistant').HomeAssistantOptions;
+  home?: import('../classes').HomeAssistantOptions;
 };
