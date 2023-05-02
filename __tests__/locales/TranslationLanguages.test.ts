@@ -1,4 +1,4 @@
-import { Languages, TranslationLanguages } from '../../src/app/locales';
+import { Languages, TranslationLanguages } from '../../src/app/enums';
 
 test('every TranslationLanguage belongs to Language', () => {
   for (const tl of Object.keys(TranslationLanguages)) {

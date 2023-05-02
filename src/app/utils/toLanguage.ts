@@ -1,4 +1,4 @@
-import { Locales } from '../locales';
+import { Locales } from '../enums';
 
 const RegionLocaleToLanguage = Object.fromEntries(
   Object.keys(Locales).map((locale) => [locale, locale === 'mni-Mtei' ? 'mni-Mtei' : locale.split('-')[0]]),

@@ -1,4 +1,4 @@
-import { Locales, TranslationLanguages } from '../../src/app/locales';
+import { Locales, TranslationLanguages } from '../../src/app/enums';
 import { toTranslationLanguage } from '../../src/app/utils';
 
 test('toTranslationLanguage', () => {

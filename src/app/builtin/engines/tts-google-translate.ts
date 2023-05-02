@@ -1,6 +1,6 @@
 import { Readable } from 'node:stream';
 import type { ReadableStream } from 'node:stream/web';
-import { Locales } from '../../locales';
+import { Locales } from '../../enums';
 
 const DefaultVoice = 'en-US';
 

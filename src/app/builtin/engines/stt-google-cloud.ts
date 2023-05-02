@@ -2,7 +2,7 @@ import { OpusEncoder } from '@discordjs/opus';
 import { SpeechClient } from '@google-cloud/speech';
 import type { google } from '@google-cloud/speech/build/protos/protos';
 import { join } from 'node:path';
-import { Languages, Locales } from '../../locales';
+import { Languages, Locales } from '../../enums';
 import { isRegionLocale } from '../../utils';
 
 const DefaultVoice = 'en-US';

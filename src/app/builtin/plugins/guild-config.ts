@@ -8,7 +8,7 @@ import type {
 } from 'discord.js';
 import { ChannelType, EmbedBuilder } from 'discord.js';
 import type { GuildAssistant } from '../../classes';
-import { Locales, TranslationLanguages } from '../../locales';
+import { Locales, TranslationLanguages } from '../../enums';
 import { configure, isLocale, isTranslationLanguage, toLanguage, toTranslationLanguage } from '../../utils';
 
 const ReloadCache = new Map<string, { locale: Locale; interaction: AnySelectMenuInteraction }>();

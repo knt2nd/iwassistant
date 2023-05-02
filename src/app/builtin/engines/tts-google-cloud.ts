@@ -1,7 +1,7 @@
 import textToSpeech from '@google-cloud/text-to-speech';
 import { join } from 'node:path';
 import { Readable } from 'node:stream';
-import { Locales } from '../../locales';
+import { Locales } from '../../enums';
 import { isLocale } from '../../utils';
 
 const DefaultVoice = 'en-US-Neural2-A';

@@ -1,4 +1,4 @@
-import { Languages, RegionLocales } from '../../src/app/locales';
+import { Languages, RegionLocales } from '../../src/app/enums';
 import { toLanguage } from '../../src/app/utils';
 
 test('every RegionLocale belongs to Language', () => {

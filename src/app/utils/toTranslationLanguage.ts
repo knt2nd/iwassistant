@@ -1,4 +1,4 @@
-import { Locales } from '../locales';
+import { Locales } from '../enums';
 
 const LocaleToTranslationLanguage = Object.fromEntries(
   Object.keys(Locales).map((locale) => {

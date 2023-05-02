@@ -1,6 +1,6 @@
 import { TranslationServiceClient } from '@google-cloud/translate';
 import { join } from 'node:path';
-import { TranslationLanguages } from '../../locales';
+import { TranslationLanguages } from '../../enums';
 
 const UnavailableLanguages = new Set(['fil', 'nb', 'tn', 'ss', 've']);
 

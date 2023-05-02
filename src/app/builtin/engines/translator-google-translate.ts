@@ -1,4 +1,4 @@
-import { TranslationLanguages } from '../../locales';
+import { TranslationLanguages } from '../../enums';
 import { isTranslationLanguage } from '../../utils';
 
 const MaxLength = 1800;

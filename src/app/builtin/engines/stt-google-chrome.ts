@@ -7,7 +7,7 @@ import type { WebSocket } from 'ws';
 import { Server } from 'ws';
 import type { App, Logger } from '../../classes';
 import { EventEmitter } from '../../classes';
-import { Locales } from '../../locales';
+import { Locales } from '../../enums';
 import { isRegionLocale } from '../../utils';
 
 const DefaultVoice = 'en-US';
