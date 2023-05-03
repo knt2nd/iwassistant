@@ -148,7 +148,7 @@ export const plugin: IPlugin<Options> = {
         audio.once('end', () => {
           if (audio.aborted || audio.transcript.length === 0) return;
           const command = assistant.interpret(audio.transcript);
-          if (command) assistant.run({ type: 'audio', command, source: audio });
+          if (command) assistant.run({ type: 'voice', command, source: audio });
         });
         if (interim) {
           const timer = setTimeout(() => audio.abort(), config.timeout);

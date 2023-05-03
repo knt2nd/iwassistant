@@ -231,7 +231,7 @@ export class DiscordManager<Ready extends boolean = boolean> {
       if (interaction.isChatInputCommand()) {
         const command = assistant.commands.get(interaction.commandName);
         if (command) {
-          assistant.run({ type: 'interaction', command, source: interaction });
+          assistant.run({ type: 'slash', command, source: interaction });
           return;
         }
       }
@@ -246,7 +246,7 @@ export class DiscordManager<Ready extends boolean = boolean> {
       if (!assistant) return;
       const command = message.author.bot ? null : assistant.interpret(message.content);
       assistant.emit('messageCreate', message, !!command);
-      if (command) assistant.run({ type: 'message', command, source: message });
+      if (command) assistant.run({ type: 'text', command, source: message });
     });
     /*
      * Message

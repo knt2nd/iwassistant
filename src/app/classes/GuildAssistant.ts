@@ -330,24 +330,24 @@ export class GuildAssistant extends Assistant<GuildAssistantInterface> {
 
   run(
     options:
-      | { type: 'interaction'; command: AttachedCommand; source: ChatInputCommandInteraction<'cached'> }
-      | { type: 'message'; command: InterpretedCommand; source: Message<true> }
-      | { type: 'audio'; command: InterpretedCommand; source: RecognizableAudio },
+      | { type: 'slash'; command: AttachedCommand; source: ChatInputCommandInteraction<'cached'> }
+      | { type: 'text'; command: InterpretedCommand; source: Message<true> }
+      | { type: 'voice'; command: InterpretedCommand; source: RecognizableAudio },
   ): void {
     switch (options.type) {
-      case 'interaction': {
-        return this.#runCommandByInteraction(options.command, options.source);
+      case 'slash': {
+        return this.#runSlashCommand(options.command, options.source);
       }
-      case 'message': {
-        return this.#runCommandByMessage(options.command, options.source);
+      case 'text': {
+        return this.#runTextCommand(options.command, options.source);
       }
-      case 'audio': {
-        return this.#runCommandByAudio(options.command, options.source as RecognizableAudio<'guild'>);
+      case 'voice': {
+        return this.#runVoiceCommand(options.command, options.source as RecognizableAudio<'guild'>);
       }
     }
   }
 
-  #runCommandByInteraction(command: AttachedCommand, source: ChatInputCommandInteraction<'cached'>): void {
+  #runSlashCommand(command: AttachedCommand, source: ChatInputCommandInteraction<'cached'>): void {
     if (!source.channel) return;
     const member = source.member;
     const log = (result: string): string => `Slash command ${result}: ${source.user.id} -> /${command.id}`;
@@ -388,7 +388,7 @@ export class GuildAssistant extends Assistant<GuildAssistantInterface> {
     });
   }
 
-  #runCommandByMessage(command: InterpretedCommand, source: Message<true>): void {
+  #runTextCommand(command: InterpretedCommand, source: Message<true>): void {
     (async () => {
       const member = source.member ?? (await this.guild.members.fetch(source.author.id));
       const log = (result: string): string => `Text command ${result}: ${source.author.id} -> /${command.id}`;
@@ -430,7 +430,7 @@ export class GuildAssistant extends Assistant<GuildAssistantInterface> {
     })().catch(this.log.error);
   }
 
-  #runCommandByAudio(command: InterpretedCommand, source: RecognizableAudio<'guild'>): void {
+  #runVoiceCommand(command: InterpretedCommand, source: RecognizableAudio<'guild'>): void {
     const member = source.member;
     const log = (result: string): string => `Voice command ${result}: ${member.id} -> /${command.id}`;
     if (!member.permissions.has(command.plugin.permissions[command.name] ?? [])) {
