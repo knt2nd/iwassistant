@@ -332,7 +332,7 @@ export class GuildAssistant extends Assistant<GuildAssistantInterface> {
     options:
       | { type: 'slash'; command: AttachedCommand; source: ChatInputCommandInteraction<'cached'> }
       | { type: 'text'; command: InterpretedCommand; source: Message<true> }
-      | { type: 'voice'; command: InterpretedCommand; source: RecognizableAudio },
+      | { type: 'voice'; command: InterpretedCommand; source: RecognizableAudio<'guild'> },
   ): void {
     switch (options.type) {
       case 'slash': {
@@ -342,7 +342,7 @@ export class GuildAssistant extends Assistant<GuildAssistantInterface> {
         return this.#runTextCommand(options.command, options.source);
       }
       case 'voice': {
-        return this.#runVoiceCommand(options.command, options.source as RecognizableAudio<'guild'>);
+        return this.#runVoiceCommand(options.command, options.source);
       }
     }
   }
