@@ -4,7 +4,6 @@ import { shortenId } from '../utils';
 import type { App } from './App';
 import type { AssistantOptions } from './Assistant';
 import { Datastore } from './Datastore';
-import type { GuildAssistantOptions } from './GuildAssistant';
 import { GuildAssistant } from './GuildAssistant';
 import { GuildAudioReceiver } from './GuildAudioReceiver';
 import { GuildVoiceChannel } from './GuildVoiceChannel';
@@ -16,22 +15,26 @@ enum Status {
   destroyed,
 }
 
-type GuildAssistantAdditionalOptions = {
+type GuildAssistantOptions = Partial<{
+  /**
+   * Guild locale
+   */
+  locale: Locale;
   /**
    * Plugin settings for each guild
    */
   plugins: PluginContextOptions;
-};
+}>;
 
 export type GuildAssistantManagerOptions = {
   /**
    * Default guild settings
    */
-  default?: Partial<GuildAssistantOptions & GuildAssistantAdditionalOptions>;
+  default?: GuildAssistantOptions;
   /**
    * Specific guild settings
    */
-  [id: string]: Partial<GuildAssistantOptions & GuildAssistantAdditionalOptions>;
+  [id: string]: GuildAssistantOptions;
 };
 
 export class GuildAssistantManager {
@@ -69,13 +72,12 @@ export class GuildAssistantManager {
     if (this.#status !== Status.ready || this.#assistants.has(guild.id)) return false;
     const log = app.log.createChild(`GUILD:${shortenId(guild.id)}`);
     const assistant = new GuildAssistant(
-      guild.members.me ?? (await guild.members.fetch(guild.client.user.id)),
-      guild,
       {
         locale: options?.locale ?? this.#options?.[guild.id]?.locale ?? this.#options?.default?.locale ?? this.#locale,
-        slash: options?.slash ?? this.#options?.[guild.id]?.slash ?? this.#options?.default?.slash ?? true,
+        self: guild.members.me ?? (await guild.members.fetch(guild.client.user.id)),
+        guild,
+        assistant: this.#assistantOptions ? structuredClone(this.#assistantOptions) : {},
       },
-      this.#assistantOptions ? structuredClone(this.#assistantOptions) : {},
       {
         data: new Datastore(`guild-${guild.id}`),
         log,

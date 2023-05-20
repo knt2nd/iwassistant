@@ -532,7 +532,7 @@ export const plugin: IPlugin<Options> = {
       beforeGuildAssistantSetup(assistant) {
         const data = assistant.data.get('guild-config');
         if (!data?.guildLocale) return;
-        assistant.options.locale = data.guildLocale;
+        assistant.locale = data.guildLocale;
       },
       async onInteractionCreate(interaction) {
         if (!app.discord.isReady() || !interaction.isStringSelectMenu() || !interaction.values[0]) return;

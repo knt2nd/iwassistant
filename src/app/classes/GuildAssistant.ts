@@ -150,19 +150,8 @@ export type GuildAssistantInterface = {
   ): Awaitable<void>;
 };
 
-export type GuildAssistantOptions = {
-  /**
-   * Guild locale
-   */
-  locale: Locale;
-  /**
-   * Use slash commands
-   * @default true
-   */
-  slash: boolean;
-};
-
 export class GuildAssistant extends Assistant<GuildAssistantInterface> {
+  readonly locale: Locale;
   readonly self: GuildMember;
   readonly guild: Guild;
   readonly data: Datastore<'guild'>;
@@ -170,16 +159,17 @@ export class GuildAssistant extends Assistant<GuildAssistantInterface> {
   readonly engines: EngineManager;
   readonly audioPlayer: IAudioPlayer;
   readonly audioReceiver: GuildAudioReceiver;
-  readonly options: GuildAssistantOptions;
   readonly requiredPermissions: Set<PermissionsString>;
   readonly #voiceChannel: GuildVoiceChannel;
   #status: Status;
 
   constructor(
-    self: GuildMember,
-    guild: Guild,
-    options: GuildAssistantOptions,
-    assistantOptions: AssistantOptions,
+    options: {
+      locale: Locale;
+      self: GuildMember;
+      guild: Guild;
+      assistant: AssistantOptions;
+    },
     di: {
       data: Datastore<'guild'>;
       log: Logger;
@@ -188,22 +178,18 @@ export class GuildAssistant extends Assistant<GuildAssistantInterface> {
       audioReceiver: GuildAudioReceiver;
     },
   ) {
-    super(assistantOptions, di.log.error);
-    this.self = self;
-    this.guild = guild;
+    super(options.assistant, di.log.error);
+    this.locale = options.locale;
+    this.self = options.self;
+    this.guild = options.guild;
     this.data = di.data;
     this.log = di.log;
     this.engines = di.engines;
     this.audioPlayer = di.voiceChannel;
     this.audioReceiver = di.audioReceiver;
-    this.options = options;
     this.requiredPermissions = new Set(LeastPermissions);
     this.#voiceChannel = di.voiceChannel;
     this.#status = Status.unready;
-  }
-
-  get locale(): Locale {
-    return this.options.locale;
   }
 
   get voice(): JoinOptions | undefined {
@@ -222,7 +208,7 @@ export class GuildAssistant extends Assistant<GuildAssistantInterface> {
     this.log.debug?.('Attachments:', attachReport, this.attachments);
     this.initializeAssistant();
     this.#initializeEvents();
-    if (this.options.slash) await this.#updateSlashCommands();
+    await this.#updateSlashCommands();
     this.log.info(`Ready: ${this.guild.id}`);
     this.#status = Status.ready;
     this.emit('ready');

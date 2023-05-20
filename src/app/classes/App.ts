@@ -38,7 +38,7 @@ type DI = {
 };
 
 export type AppInterface = {
-  beforeGuildAssistantSetup(assistant: GuildAssistant, optionsList: PluginContextOptions[]): Awaitable<void>;
+  beforeGuildAssistantSetup(assistant: Mutable<GuildAssistant>, optionsList: PluginContextOptions[]): Awaitable<void>;
   beforeDestroy(reason: string): Awaitable<void>;
   onReady(): Awaitable<void>;
   // Discord.js events
