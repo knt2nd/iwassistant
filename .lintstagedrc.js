@@ -10,9 +10,9 @@ function getFiles(dir) {
     .flat();
 }
 
-const tsconfig = JSON.parse(readFileSync('./tsconfig.json', 'utf8').replace(/\/\/.*?\n/g, ''));
-const options = Object.entries(tsconfig.compilerOptions).map(([k, v]) => `--${k} ${v}`);
-const dtsFiles = getFiles('./src/').filter((name) => name.match(/\.d\.ts$/));
+const tsconfig = JSON.parse(readFileSync('./tsconfig.json', 'utf8').replaceAll(/^\s*\/\/.*$/gm, ''));
+const options = Object.entries(tsconfig.compilerOptions).map(([key, value]) => `--${key} ${value}`);
+const dtsFiles = getFiles('./src/').filter((name) => /\.d\.ts$/.test(name));
 
 module.exports = {
   '*': 'prettier --write --ignore-unknown',
