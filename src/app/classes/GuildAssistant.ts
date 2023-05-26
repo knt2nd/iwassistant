@@ -164,13 +164,10 @@ export class GuildAssistant extends Assistant<GuildAssistantInterface> {
   #status: Status;
 
   constructor(
-    options: {
-      locale: Locale;
-      self: GuildMember;
-      guild: Guild;
-      assistant: AssistantOptions;
-    },
+    options: { locale: Locale } & AssistantOptions,
     di: {
+      member: GuildMember;
+      guild: Guild;
       data: Datastore<'guild'>;
       log: Logger;
       engines: EngineManager;
@@ -178,10 +175,10 @@ export class GuildAssistant extends Assistant<GuildAssistantInterface> {
       audioReceiver: GuildAudioReceiver;
     },
   ) {
-    super(options.assistant, di.log.error);
+    super(options, di.log.error);
     this.locale = options.locale;
-    this.self = options.self;
-    this.guild = options.guild;
+    this.self = di.member;
+    this.guild = di.guild;
     this.data = di.data;
     this.log = di.log;
     this.engines = di.engines;

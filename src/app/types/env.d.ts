@@ -26,7 +26,7 @@ type Env = {
   /**
    * Guild settings
    */
-  guilds?: import('../classes').GuildAssistantManagerOptions;
+  guilds?: Exclude<import('../classes').GuildAssistantMangerOptions['guilds'], undefined>;
   /**
    * Home settings
    */

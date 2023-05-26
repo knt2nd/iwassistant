@@ -40,14 +40,12 @@ export class HomeAssistant extends Assistant<HomeAssistantInterface> {
   #status: Status;
 
   constructor(
-    locale: Locale,
-    options: HomeAssistantOptions | undefined,
-    assistantOptions: AssistantOptions | undefined,
+    options: { locale: Locale } & AssistantOptions & HomeAssistantOptions,
     di: { data: Datastore<'home'>; log: Logger; engines: EngineManager },
   ) {
     const log = di.log.createChild('HOME');
-    super(assistantOptions ?? {}, log.error);
-    this.locale = locale;
+    super(options, log.error);
+    this.locale = options.locale;
     this.data = di.data;
     this.log = log;
     this.engines = di.engines;
