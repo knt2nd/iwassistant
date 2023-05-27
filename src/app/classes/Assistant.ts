@@ -234,13 +234,15 @@ class PlayableAudioImpl extends EventEmitter<{ error: [error: unknown]; ready: [
     this.#generator = generator;
   }
 
-  async generate(): Promise<void> {
+  generate(): void {
     if (this.resource) return;
-    try {
-      this.resource = await this.#generator();
-      this.emit('ready');
-    } catch (error) {
-      this.emit('error', error);
-    }
+    this.#generator()
+      .then((resource) => {
+        this.resource = resource;
+        this.emit('ready');
+      })
+      .catch((error) => {
+        this.emit('error', error);
+      });
   }
 }

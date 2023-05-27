@@ -147,13 +147,15 @@ class PlayableSpeechImpl
     return this.response?.resource;
   }
 
-  async generate(): Promise<void> {
+  generate(): void {
     if (this.response) return;
-    try {
-      this.response = await this.#generator(this.request);
-      this.emit('ready');
-    } catch (error) {
-      this.emit('error', error);
-    }
+    this.#generator(this.request)
+      .then((response) => {
+        this.response = response;
+        this.emit('ready');
+      })
+      .catch((error) => {
+        this.emit('error', error);
+      });
   }
 }

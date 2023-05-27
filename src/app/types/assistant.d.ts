@@ -2,7 +2,7 @@ type AssistantType = 'guild' | 'home';
 
 type PlayableAudio = {
   readonly resource: import('node:stream').Readable | undefined;
-  generate(): Promise<void>;
+  generate(): void;
 } & import('../classes').EventEmitter<{
   error: [error: unknown];
   ready: [];
