@@ -53,7 +53,7 @@ Second, edit `src/env/default.ts`.
 
 - `locale`: Language code, or region locale code
   - e.g. `en`, `jp`, `zh`, `en-US`, `en-GB`, `zh-TW`, `zh-HK`
-  - cf. [Languages.ts](./src/app/locales/Languages.ts), [RegionLocales.ts](./src/app/locales/RegionLocales.ts)
+  - cf. [Languages.ts](./src/app/enums/Languages.ts), [RegionLocales.ts](./src/app/enums/RegionLocales.ts)
 - `discord.token`: Your bot's token
   - Or, comment out the `token` field and set it to [a environment variable as DISCORD_TOKEN](https://discord.js.org/#/docs/discord.js/main/class/Client?scrollTo=token)
 
