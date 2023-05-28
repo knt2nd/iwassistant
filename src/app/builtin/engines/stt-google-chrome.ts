@@ -498,10 +498,7 @@ class LoadBalancer {
     const instance = this.#select();
     if (!instance) return false;
     this.#log.debug?.(`[LB] ${instance.id} <= ${this.#instances.map((i) => [i.id, i.queued, i.active]).join('/')}`);
-    (async () => {
-      if (request.audio.prepare) await request.audio.prepare();
-      instance.transcribe(request);
-    })().catch(this.#log.error);
+    request.audio.once('ready', () => instance.transcribe(request));
     return true;
   }
 

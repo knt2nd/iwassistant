@@ -498,8 +498,11 @@ export class GuildAssistant extends Assistant<GuildAssistantInterface> {
   transcribe(options: TranscribeOptions): boolean {
     const stt = this.engines.getSTT(options.engine);
     this.fallbackVoice(stt, options);
-    options.request.audio.prepare = async () => void (await this.hook('transcribe', options.request, stt));
-    return stt.transcribe(options.request);
+    if (!stt.transcribe(options.request)) return false;
+    this.hook('transcribe', options.request, stt)
+      .then(() => options.request.audio.emit('ready'))
+      .catch(this.log.error);
+    return true;
   }
 
   speak(options: string | CreateSpeechOptions): boolean {

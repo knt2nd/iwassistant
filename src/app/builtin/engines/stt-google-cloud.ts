@@ -290,10 +290,7 @@ export const engine: IEngine<Config> = {
       active: true,
       locales: availableLocales(),
       transcribe: (request) => {
-        (async () => {
-          if (request.audio.prepare) await request.audio.prepare();
-          transcribe(request);
-        })().catch(log.error);
+        request.audio.once('ready', () => transcribe(request));
         return true;
       },
     };
