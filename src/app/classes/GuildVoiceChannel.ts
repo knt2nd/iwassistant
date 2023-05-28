@@ -213,6 +213,7 @@ export class GuildVoiceChannel extends EventEmitter<Events> implements IAudioPla
     if (!this.#current) return false;
     const kickStart = this.#current.queue.push(audio) === 1;
     if (kickStart) this.#startToPlay(audio);
+    audio.once('error', (error) => void this.emit('error', this.#createError('audio', error)));
     audio.generate();
     return true;
   }
@@ -234,11 +235,10 @@ export class GuildVoiceChannel extends EventEmitter<Events> implements IAudioPla
       this.#debug?.('audio', 'Ready', debugAudio(audio));
       this.#tryToPlay(audio);
     };
-    audio.once('error', (error) => {
+    audio.once('error', () => {
       clearTimeout(timer);
       audio.off('ready', onReady);
       this.#onPlayed();
-      this.emit('error', this.#createError('audio', error));
     });
     audio.once('ready', onReady);
   }
