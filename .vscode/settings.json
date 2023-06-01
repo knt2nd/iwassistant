@@ -5,6 +5,7 @@
   "editor.defaultFormatter": "esbenp.prettier-vscode",
   "editor.codeActionsOnSave": ["source.fixAll.eslint", "source.organizeImports"],
   "jest.autoRun": { "watch": false, "onSave": "test-only" },
+  "markdownlint.config": { "MD033": false },
   "cSpell.words": [
     "bitfield",
     "blurple",

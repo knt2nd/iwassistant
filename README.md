@@ -23,8 +23,7 @@ A Discord bot that speaks, listens, and runs commands, like a smart speaker
 1. [Enable the **Message Content** and **Server Members** intents in Discord Developer Portal](https://discordpy.readthedocs.io/en/stable/intents.html#privileged-intents)
 1. [Add your bot to servers with the invite link below](https://discordjs.guide/preparations/adding-your-bot-to-servers.html)
 
-```
-# Replace the client id
+```text
 https://discord.com/api/oauth2/authorize?client_id=__YOUR_CLIENT_ID__&permissions=3238976&scope=bot%20applications.commands
 ```
 
@@ -114,7 +113,7 @@ iwassistant itself doesn't have any feature, its plugins have. The following plu
   </tr>
   <tr>
     <td><code>/config-channel</code></td>
-    <td>Configure text and <strong>voice*</strong> channel's settings</td>
+    <td>Configure text and voice* channel's settings</td>
   </tr>
   <tr>
     <td>guild-follow</td>
@@ -162,7 +161,7 @@ iwassistant itself doesn't have any feature, its plugins have. The following plu
   </tr>
 </table>
 
-<strong>\*</strong> Input the command in <a href="https://support.discord.com/hc/en-us/articles/4412085582359-Text-Channels-Text-Chat-In-Voice-Channels#h_01FMJT412WBX1MR4HDYNR8E95X">a text chat in a voice channel</a>
+\*Input the command in [a text chat in a voice channel](https://support.discord.com/hc/en-us/articles/4412085582359-Text-Channels-Text-Chat-In-Voice-Channels#h_01FMJT412WBX1MR4HDYNR8E95X)
 
 ![Text Chat in a Voice Channel](./docs/images/voice-text-chat.png)
 
@@ -359,7 +358,7 @@ Say "OK assistant, help" in the voice channel. The bot should run the `/help` co
 
 With the proper settings, the logs should look like this.
 
-```
+```text
 [INF] [APP] Launching iwassistant
 [INF] [APP] Locale: en
 [INF] [STT] [Chrome:18400] Output Device: {0.0.1.00000000}.{xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx}
@@ -473,7 +472,7 @@ xvfb-run -n 0 -s "-screen 0 1x1x8" npm start
 
 To make it as a service, create a unit file as `/etc/systemd/system/iwassistant.service`.
 
-```
+```ini
 [Unit]
 Description=iwassistant
 After=network-online.target multi-user.target graphical.target
@@ -572,4 +571,4 @@ nodemon --watch './src/**' --signal SIGINT ./src/app/index.ts
 Name: Kanata  
 Language: Japanese(native) English(intermediate) Chinese(basic)  
 Discord: Kanata#3360  
-GitHub: https://github.com/knt2nd
+GitHub: <https://github.com/knt2nd>
