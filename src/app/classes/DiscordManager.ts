@@ -205,8 +205,8 @@ export class DiscordManager<Ready extends boolean = boolean> {
     this.#on('shardReady', (_, unavailableGuilds) => {
       log.info('Shard ready', unavailableGuilds ?? '');
     });
-    this.#on('shardDisconnect', (closeEvent) => {
-      log.info('Shard disconnect', closeEvent.code, closeEvent.wasClean, closeEvent.reason);
+    this.#on('shardDisconnect', ({ code }) => {
+      log.info('Shard disconnect', code === 1000 ? '' : code);
     });
     // this.#on('shardReconnecting', () => {
     //   log.info('Shard reconnecting');
