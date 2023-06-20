@@ -145,7 +145,6 @@ export class GuildVoiceChannel extends EventEmitter<Events> implements IAudioPla
     const onReconnecting = (): void => {
       if (reconnecting) return;
       reconnecting = true;
-      this.stop();
       this.#debug?.('connection', 'Reconnecting');
       // reconnecting or moving to another channel
       this.#di
@@ -155,6 +154,10 @@ export class GuildVoiceChannel extends EventEmitter<Events> implements IAudioPla
           this.#debug?.('connection', 'Reconnected', connection.joinConfig);
           this.emit('join', connection, true);
           if (!this.#current) return;
+          if (connection.joinConfig.channelId !== options.channelId) {
+            this.stop();
+            this.#debug?.('player', 'Queue cleared');
+          }
           this.#current.options = {
             channelId: connection.joinConfig.channelId ?? options.channelId,
             selfDeaf: connection.joinConfig.selfDeaf,
