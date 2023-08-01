@@ -120,6 +120,7 @@ export enum TranslationLanguages {
   th = 'Thai',
   ti = 'Tigrinya',
   tk = 'Turkmen',
+  // eslint-disable-next-line @typescript-eslint/no-duplicate-enum-values
   tl = 'Filipino',
   tn = 'Setswana',
   tr = 'Turkish',

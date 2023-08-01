@@ -328,7 +328,7 @@ class ChromeAdapter extends EventEmitter<{
       this.#ws = ws;
       ws.on('close', () => (this.#ws = undefined));
       ws.on('error', (error) => this.emit('error', error));
-      ws.on('message', (data) => {
+      ws.on('message', (data: Stringable) => {
         this.#log.debug?.(`[CA:${this.#port}] << ${data.toString().replaceAll('\t', ':')}`);
         const [eventName, ...args] = data.toString().split('\t');
         switch (eventName) {

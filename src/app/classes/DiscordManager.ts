@@ -167,7 +167,7 @@ export class DiscordManager<Ready extends boolean = boolean> {
     if (this.#status !== Status.ready) return;
     this.#status = Status.destroying;
     await this.assistants.destroy().catch();
-    this.client.destroy();
+    await this.client.destroy();
     await sleep(500);
     this.#status = Status.destroyed;
   }

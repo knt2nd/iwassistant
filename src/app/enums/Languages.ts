@@ -120,6 +120,7 @@ export enum Languages {
   th = 'ไทย', // Thai
   ti = 'Tigrinya',
   tk = 'Türkmençe', // Turkmen
+  // eslint-disable-next-line @typescript-eslint/no-duplicate-enum-values
   tl = 'Filipino',
   tn = 'Setswana',
   tr = 'Türkçe', // Turkish
