@@ -32,8 +32,8 @@ export const engine: IEngine<Config> = {
   async createTTS({ config, app }) {
     const client = new textToSpeech.TextToSpeechClient({ keyFile: config.secret });
     const [listResponse] = await client.listVoices();
-    const listedVoices = listResponse.voices as NonNullable<typeof listResponse.voices>;
-    const voices = [...new Set(listedVoices.map((voice) => voice.name as string))]
+    const listedVoices = listResponse.voices!;
+    const voices = [...new Set(listedVoices.map((voice) => voice.name!))]
       .sort()
       .sort((a, b) => {
         const [aMain, aSub] = a.toLocaleLowerCase().split('-');

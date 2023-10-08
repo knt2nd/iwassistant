@@ -276,8 +276,8 @@ export const engine: IEngine<Config> = {
       });
       recognizer.on('data', (data: google.cloud.speech.v1.StreamingRecognizeResponse) => {
         let transcript = '';
-        for (let i = 0; i < data.results.length; i++) {
-          transcript += data.results[i]?.alternatives?.[0]?.transcript ?? '';
+        for (const result of data.results) {
+          transcript += result.alternatives?.[0]?.transcript ?? '';
         }
         if (transcript.length === 0) return;
         const isFinal = !!data.results.at(-1)?.isFinal;

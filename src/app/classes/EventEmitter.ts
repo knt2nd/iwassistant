@@ -11,7 +11,7 @@ export abstract class EventEmitter<Events extends Record<string, unknown[]>> {
   constructor(errorHandler: ErrorHandler = () => {}) {
     this.#error = errorHandler;
     this.#emitter = new Builtin({ captureRejections: true });
-    (this.#emitter as Builtin & { [p: symbol]: Function })[Symbol.for('nodejs.rejection')] = this.#onError;
+    (this.#emitter as Builtin & Record<symbol, Function>)[Symbol.for('nodejs.rejection')] = this.#onError;
     this.#prevErrorTime = 0;
     this.#errorCount = 0;
   }

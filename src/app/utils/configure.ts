@@ -41,13 +41,13 @@ export function configure<
   ) as Record<keyof T, Field>;
   if (input) {
     const matched = input.value.match(/^__(\d+)__$/);
-    if (matched && matched[1] !== undefined) {
-      msgFields[input.key].page = Number.parseInt(matched[1]);
-    } else {
+    if (matched?.[1] === undefined) {
       msgFields[input.key].value = input.value;
       const isNumber = typeof data[input.key] === 'number';
       data[input.key] = (isNumber ? Number.parseInt(input.value) : input.value) as U[keyof T];
       updated = true;
+    } else {
+      msgFields[input.key].page = Number.parseInt(matched[1]);
     }
   }
   const embed = new EmbedBuilder().setColor('Blurple');

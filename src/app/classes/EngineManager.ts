@@ -25,7 +25,7 @@ function selectVoiceEngine<T extends ITextToSpeech | ISpeechToText>(
     if (locale) {
       if (isRegionLocale(locale)) {
         const lang = toLanguage(locale);
-        engine = list.find(({ active, defaultVoices }) => active && (defaultVoices[locale] || defaultVoices[lang]));
+        engine = list.find(({ active, defaultVoices }) => active && (defaultVoices[locale] ?? defaultVoices[lang]));
       } else {
         engine = list.find(({ active, defaultVoices }) => active && defaultVoices[locale]);
       }

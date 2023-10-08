@@ -161,7 +161,7 @@ export const plugin: IPlugin<Options> = {
         }
         // for multi-clients
         const embed = message.embeds[0];
-        if (!embed || !embed.url || !embed.description) return;
+        if (!embed?.url || !embed.description) return;
         const url = new URL(embed.url);
         if (url.searchParams.get('type') !== 'translation') return;
         if (url.searchParams.get('client') === assistant.guild.client.user.id) return;

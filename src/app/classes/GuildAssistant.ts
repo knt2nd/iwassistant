@@ -253,7 +253,7 @@ export class GuildAssistant extends Assistant<GuildAssistantInterface> {
     const discordLocales = Object.values(DiscordLocales);
     const slashCommands: SlashCommandBuilder[] = [];
     for (const command of this.commands.values()) {
-      const i18n: Map<Locale, { description: string; options: Record<string, string> }> = new Map();
+      const i18n = new Map<Locale, { description: string; options: Record<string, string> }>();
       for (const [locale, metadata] of Object.entries(command.plugin.i18n)) {
         const description = metadata.command?.[command.name]?.description;
         if (!description) continue;
@@ -290,6 +290,7 @@ export class GuildAssistant extends Assistant<GuildAssistantInterface> {
           for (const locale of discordLocales) {
             const sub = i18n.get(locale) ?? i18n.get(toLanguage(locale));
             if (!sub) continue;
+            // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
             option.setDescriptionLocalization(locale, sub.options[name] || '-');
           }
           return option;

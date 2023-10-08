@@ -39,10 +39,10 @@ export type PluginInterface = Record<string, Handler>;
 
 export abstract class PluginAdapter<T extends PluginInterface> extends EventEmitter<Events<T>> {
   abstract readonly locale: Locale;
-  readonly dicts: Map<string, I18nDictionary> = new Map();
-  readonly attachments: Map<string, AttachedPlugin> = new Map();
-  readonly commands: Map<string, AttachedCommand> = new Map();
-  readonly #hooks: Map<keyof Hooks<T>, Handler[]> = new Map();
+  readonly dicts = new Map<string, I18nDictionary>();
+  readonly attachments = new Map<string, AttachedPlugin>();
+  readonly commands = new Map<string, AttachedCommand>();
+  readonly #hooks = new Map<keyof Hooks<T>, Handler[]>();
 
   protected async attach(
     resource: PluginManager,
@@ -97,7 +97,7 @@ export abstract class PluginAdapter<T extends PluginInterface> extends EventEmit
       for (const [key, execute] of Object.entries(result.setup)) {
         if (!(execute instanceof Function)) continue; // just in case
         const matched = key.match(/^(on|before|command)([A-Z]\w+)$/);
-        if (!matched || matched[1] === undefined || matched[2] === undefined) continue;
+        if (matched?.[1] === undefined || matched[2] === undefined) continue;
         const type = matched[1];
         const name = uncapitalize(matched[2]);
         switch (type) {

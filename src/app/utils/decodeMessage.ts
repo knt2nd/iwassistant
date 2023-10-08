@@ -11,7 +11,7 @@ const ChannelPattern = /<#(\d{17,20})>/g;
 const EmojiPattern = /<a?(:\w{2,32}:)\d{17,20}>/g;
 
 function isMessage(resolver: Message | Guild): resolver is Message {
-  return !!(resolver as { mentions: object })['mentions'];
+  return !!(resolver as { mentions: object }).mentions;
 }
 
 // lazy decode (no fetch)

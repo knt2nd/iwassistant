@@ -171,6 +171,7 @@ function availableLocales(): VoiceLocales {
 function chromePath(platform: string): string {
   switch (platform) {
     case 'win32': {
+      // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
       return `${process.env['PROGRAMFILES'] || 'C:\\Program Files'}\\Google\\Chrome\\Application\\chrome.exe`;
     }
     case 'darwin': {

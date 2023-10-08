@@ -91,9 +91,7 @@ export class PluginManager {
           .replaceAll(/(\/\/.*|'.*?'|".*?")/g, '')
           .replaceAll(/(\/\*.*\*\/|`.*?`)/gs, '')
           .matchAll(/on([A-Z][a-z]+[A-Z][A-Za-z]+)/g);
-        const filtered = [...matched]
-          .map(([, name]) => uncapitalize(name as string))
-          .filter((name) => allNames.has(name));
+        const filtered = [...matched].map(([, name]) => uncapitalize(name!)).filter((name) => allNames.has(name));
         for (const name of filtered) {
           names.add(name);
         }
