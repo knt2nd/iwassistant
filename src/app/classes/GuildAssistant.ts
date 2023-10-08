@@ -141,7 +141,7 @@ export type GuildAssistantInterface = {
   onStageInstanceCreate(...args: ClientEvents['stageInstanceCreate']): Awaitable<void>;
   onStageInstanceDelete(...args: ClientEvents['stageInstanceDelete']): Awaitable<void>;
   onStageInstanceUpdate(...args: ClientEvents['stageInstanceUpdate']): Awaitable<void>;
-  onWebhookUpdate(...args: ClientEvents['webhookUpdate']): Awaitable<void>;
+  onWebhooksUpdate(...args: ClientEvents['webhooksUpdate']): Awaitable<void>;
   onApplicationCommandPermissionsUpdate(...args: ClientEvents['applicationCommandPermissionsUpdate']): Awaitable<void>;
   onPresenceUpdate(...args: ClientEvents['presenceUpdate']): Awaitable<void>;
   onVoiceStateUpdate(...args: ClientEvents['voiceStateUpdate']): Awaitable<void>;

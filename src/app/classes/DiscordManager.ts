@@ -482,8 +482,8 @@ export class DiscordManager<Ready extends boolean = boolean> {
     /*
      * Misc
      */
-    this.#on('webhookUpdate', (channel) => {
-      assistants.get(channel.guild.id)?.emit('webhookUpdate', channel);
+    this.#on('webhooksUpdate', (channel) => {
+      assistants.get(channel.guild.id)?.emit('webhooksUpdate', channel);
     });
     this.#on('applicationCommandPermissionsUpdate', (data) => {
       assistants.get(data.guildId)?.emit('applicationCommandPermissionsUpdate', data);
