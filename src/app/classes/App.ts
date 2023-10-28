@@ -37,8 +37,8 @@ type DI = {
   home: HomeAssistant;
 };
 
-export type AppInterface = {
-  beforeGuildAssistantSetup(assistant: Mutable<GuildAssistant>, optionsList: PluginContextOptions[]): Awaitable<void>;
+export type AppBuiltinInterface = {
+  beforeGuildSetup(assistant: Mutable<GuildAssistant>, optionsList: PluginContextOptions[]): Awaitable<void>;
   beforeDestroy(reason: string): Awaitable<void>;
   onReady(): Awaitable<void>;
   // Discord.js events
@@ -57,7 +57,7 @@ export type AppInterface = {
   onUserUpdate(...args: ClientEvents['userUpdate']): Awaitable<void>;
 };
 
-export class App extends PluginAdapter<AppInterface> {
+export class App extends PluginAdapter<AppInterface & AppBuiltinInterface> {
   readonly locale: Locale;
   readonly data: Datastore<'app'>;
   readonly log: Logger;

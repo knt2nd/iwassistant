@@ -22,7 +22,7 @@ type CreateSpeechOptions = {
   request: TTSRequest;
 };
 
-export type HomeAssistantInterface = {
+export type HomeBuiltinInterface = {
   beforeTranscribe(request: STTRequest<'home'>): Awaitable<void>;
   beforeDestroy(): Awaitable<void>;
   onReady(): Awaitable<void>;
@@ -30,7 +30,7 @@ export type HomeAssistantInterface = {
 
 export type HomeAssistantOptions = {};
 
-export class HomeAssistant extends Assistant<HomeAssistantInterface> {
+export class HomeAssistant extends Assistant<HomeInterface & HomeBuiltinInterface> {
   readonly locale: Locale;
   readonly data: Datastore<'home'>;
   readonly log: Logger;

@@ -5,13 +5,13 @@ type PluginOptions = {
   data?: Partial<Record<'app' | 'guild' | 'home', BasicObject>>;
 };
 
-type AppHandlers = Partial<import('../classes').AppInterface>;
+type AppHandlers = Partial<AppInterface & import('../classes').AppBuiltinInterface>;
 
-type GuildHandlers<T extends PluginOptions = {}> = Partial<import('../classes').GuildAssistantInterface> &
-  CommandHandlers<T, 'guild'>;
+type GuildHandlers<T extends PluginOptions = {}> = CommandHandlers<T, 'guild'> &
+  Partial<GuildInterface & import('../classes').GuildBuiltinInterface>;
 
-type HomeHandlers<T extends PluginOptions = {}> = Partial<import('../classes').HomeAssistantInterface> &
-  CommandHandlers<T, 'home'>;
+type HomeHandlers<T extends PluginOptions = {}> = CommandHandlers<T, 'home'> &
+  Partial<HomeInterface & import('../classes').HomeBuiltinInterface>;
 
 type CommandHandlers<T extends PluginOptions, U extends 'guild' | 'home'> = {
   [P in keyof T['command'] as T['command'][P] extends { type: U }
@@ -121,3 +121,18 @@ type AvailablePlugin<T extends PluginOptions = {}> = (T['data'] extends object
     : {});
 
 interface AvailablePlugins {}
+
+// eslint-disable-next-line @typescript-eslint/consistent-indexed-object-style
+interface AppInterface {
+  [name: string]: import('../classes').PluginHandler;
+}
+
+// eslint-disable-next-line @typescript-eslint/consistent-indexed-object-style
+interface GuildInterface {
+  [name: string]: import('../classes').PluginHandler;
+}
+
+// eslint-disable-next-line @typescript-eslint/consistent-indexed-object-style
+interface HomeInterface {
+  [name: string]: import('../classes').PluginHandler;
+}

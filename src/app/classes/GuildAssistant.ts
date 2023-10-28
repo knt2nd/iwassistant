@@ -78,7 +78,7 @@ type TranscribeOptions = {
   request: STTRequest;
 };
 
-export type GuildAssistantInterface = {
+export type GuildBuiltinInterface = {
   beforeCommandsUpdate(commands: (SlashCommandBuilder | ContextMenuCommandBuilder)[]): Awaitable<void>;
   beforeJoin(options: JoinOptions, rejoin: boolean): Awaitable<void>;
   beforeSpeak(speech: PlayableSpeech<'guild'>): Awaitable<void>;
@@ -150,7 +150,7 @@ export type GuildAssistantInterface = {
   ): Awaitable<void>;
 };
 
-export class GuildAssistant extends Assistant<GuildAssistantInterface> {
+export class GuildAssistant extends Assistant<GuildInterface & GuildBuiltinInterface> {
   readonly locale: Locale;
   readonly self: GuildMember;
   readonly guild: Guild;
@@ -199,7 +199,7 @@ export class GuildAssistant extends Assistant<GuildAssistantInterface> {
     if (this.#status !== Status.unready) return;
     this.#status = Status.preparing;
     await this.data.setup(this.engines.getStore(), this.log.error);
-    await app.hook('guildAssistantSetup', this, optionsList);
+    await app.hook('guildSetup', this, optionsList);
     this.log.debug?.('Data:', this.data);
     const attachReport = await this.attach(app.plugins, { type: 'guild', assistant: this, app, optionsList });
     this.log.debug?.('Attachments:', attachReport, this.attachments);

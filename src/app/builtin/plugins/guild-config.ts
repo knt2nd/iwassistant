@@ -529,7 +529,7 @@ export const plugin: IPlugin<Options> = {
   },
   setupApp({ app }) {
     return {
-      beforeGuildAssistantSetup(assistant) {
+      beforeGuildSetup(assistant) {
         const data = assistant.data.get('guild-config');
         if (!data?.guildLocale) return;
         assistant.locale = data.guildLocale;

@@ -22,7 +22,7 @@ export const plugin: IPlugin<Options> = {
   },
   setupApp() {
     return {
-      beforeGuildAssistantSetup(_, optionsList) {
+      beforeGuildSetup(_, optionsList) {
         // force the settings, meaning ignore the env settings
         optionsList.push({
           // no abort, always transcribe all

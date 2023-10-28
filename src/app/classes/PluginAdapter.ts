@@ -15,9 +15,6 @@ function toAttachedPlugin(plugin: AdaptablePlugin): AttachedPlugin {
   return { name, description, config, permissions, i18n };
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-type Handler = (...args: any) => Awaitable<void>;
-
 type Events<T extends PluginInterface> = {
   [P in keyof T as P extends `on${infer U}` ? Uncapitalize<U> : never]: Parameters<T[P]>;
 };
@@ -35,14 +32,17 @@ export type AttachedCommand = {
   execute: (event: CommandEvent) => Awaitable<void | boolean>;
 };
 
-export type PluginInterface = Record<string, Handler>;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export type PluginHandler = (...args: any) => Awaitable<void | boolean>;
+
+export type PluginInterface = Record<string, PluginHandler>;
 
 export abstract class PluginAdapter<T extends PluginInterface> extends EventEmitter<Events<T>> {
   abstract readonly locale: Locale;
   readonly dicts = new Map<string, I18nDictionary>();
   readonly attachments = new Map<string, AttachedPlugin>();
   readonly commands = new Map<string, AttachedCommand>();
-  readonly #hooks = new Map<keyof Hooks<T>, Handler[]>();
+  readonly #hooks = new Map<keyof Hooks<T>, PluginHandler[]>();
 
   protected async attach(
     resource: PluginManager,
@@ -53,7 +53,7 @@ export abstract class PluginAdapter<T extends PluginInterface> extends EventEmit
     ),
   ): Promise<Record<'events' | 'hooks' | 'commands', string[]>> {
     const plugins = resource.createContext(options.optionsList);
-    const promises: Promise<{ plugin: AdaptablePlugin; setup?: Record<string, Handler> }>[] = [];
+    const promises: Promise<{ plugin: AdaptablePlugin; setup?: PluginInterface }>[] = [];
     for (const plugin of plugins) {
       const dict = new I18nDictionary(
         this.locale,
@@ -102,13 +102,11 @@ export abstract class PluginAdapter<T extends PluginInterface> extends EventEmit
         const name = uncapitalize(matched[2]);
         switch (type) {
           case 'on': {
-            this.on(name as keyof Events<T>, execute);
+            this.on(name as keyof Events<T>, execute as () => void);
             break;
           }
           case 'before': {
-            let hooks = this.#hooks.get(name as keyof Hooks<T>);
-            if (!hooks) this.#hooks.set(name as keyof Hooks<T>, (hooks = []));
-            hooks.push(execute);
+            this.before(name as keyof Hooks<T>, execute as () => void);
             break;
           }
           case 'command': {
@@ -135,6 +133,13 @@ export abstract class PluginAdapter<T extends PluginInterface> extends EventEmit
       hooks: [...this.#hooks.keys()].sort() as string[],
       commands: [...this.commands].map(([id, { plugin }]) => `${plugin.name}:${id}`),
     };
+  }
+
+  before<P extends keyof Hooks<T>>(hookName: P, listener: (...args: Hooks<T>[P]) => Awaitable<void>): this {
+    let hooks = this.#hooks.get(hookName);
+    if (!hooks) this.#hooks.set(hookName, (hooks = []));
+    hooks.push(listener);
+    return this;
   }
 
   async hook<P extends keyof Hooks<T>>(

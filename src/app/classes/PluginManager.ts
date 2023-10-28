@@ -7,6 +7,7 @@ import type { GuildAssistant } from './GuildAssistant';
 import type { HomeAssistant } from './HomeAssistant';
 import type { I18nDictionary } from './I18nDictionary';
 import type { ModuleLoader, ModuleReport } from './ModuleLoader';
+import type { PluginInterface } from './PluginAdapter';
 
 enum Status {
   unready,
@@ -23,8 +24,7 @@ type PluginSetupContext = {
   app: App;
 };
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-type PluginSetupResult = Awaitable<Record<string, (...args: any) => Awaitable<void>>>;
+type PluginSetupResult = Awaitable<PluginInterface>;
 
 export type AdaptablePlugin = {
   name: string;
@@ -110,12 +110,15 @@ export class PluginManager {
   async setup(): Promise<SetupReport> {
     if (this.#status !== Status.unready) return this.#report;
     this.#status = Status.preparing;
-    await this.#loader.load((source) => ({
-      config: {},
-      permissions: {},
-      i18n: {},
-      ...source, // might have extra properties at runtime and overwrite those empty objects
-    }));
+    await this.#loader.load(
+      (source) =>
+        ({
+          config: {},
+          permissions: {},
+          i18n: {},
+          ...source, // might have extra properties at runtime and overwrite those empty objects
+        }) as AdaptablePlugin,
+    );
     this.#status = Status.ready;
     return this.#report;
   }
