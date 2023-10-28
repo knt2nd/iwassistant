@@ -120,10 +120,6 @@ export class Datastore<T extends keyof PluginData = 'default'> {
     subscribers.push(subscriber as (value: BasicValue | undefined) => Awaitable<void>);
   }
 
-  unsubscribe(key: string): boolean {
-    return this.#subscribers.delete(key);
-  }
-
   #publish(key: string, value?: BasicValue): void {
     const subscribers = this.#subscribers.get(key);
     if (!subscribers) return;
