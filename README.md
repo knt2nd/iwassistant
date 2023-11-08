@@ -570,5 +570,5 @@ nodemon --watch './src/**' --signal SIGINT ./src/app/index.ts
 
 Name: Kanata  
 Language: Japanese(native) English(intermediate) Chinese(basic)  
-Discord: Kanata#3360  
+Discord: knt2nd  
 GitHub: <https://github.com/knt2nd>
