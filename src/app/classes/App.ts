@@ -96,7 +96,7 @@ export class App extends PluginAdapter<AppInterface & AppBuiltinInterface> {
     for (const module of engineReport.modules) {
       this.#log.info(`${module.enabled ? '*' : '-'} ${module.name}: ${module.description}`);
     }
-    await this.data.setup(this.engines.getStore(), this.#log.error);
+    await this.data.setup(this.engines.findStore(), this.#log.error);
     this.#log.debug?.('Data:', this.data);
     const pluginReport = await this.plugins.setup();
     this.#log.info('Plugins:');

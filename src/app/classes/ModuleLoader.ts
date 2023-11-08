@@ -47,7 +47,7 @@ export class ModuleLoader<Source extends ModuleBase = ModuleBase, Module extends
         typeof source.description !== 'string' ||
         source.name.length === 0
       ) {
-        throw new Error(`invalid ${this.#type}: ${file}`);
+        throw new Error(`Invalid ${this.#type}: ${file}`);
       }
       this.#modules.set(source.name, converter(source));
     }

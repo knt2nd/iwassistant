@@ -13,7 +13,7 @@ function generateDefaultVoices(engine: { locales: I18n<Record<string, string>>; 
   }
 }
 
-function selectVoiceEngine<T extends ITextToSpeech | ISpeechToText>(
+function findVoiceEngine<T extends ITextToSpeech | ISpeechToText>(
   dummy: T,
   map: Map<string, T>,
   list: T[],
@@ -179,12 +179,12 @@ export class EngineManager {
     return report;
   }
 
-  getStore(query?: { name?: string }): IStore {
+  findStore(query?: { name?: string }): IStore {
     const engine = query?.name ? this.maps.store.get(query.name) : this.#lists.store[0];
     return engine ?? this.dummy.store;
   }
 
-  getTranslator(query?: {
+  findTranslator(query?: {
     name?: string;
     language?: { to: TranslationLanguage; from?: TranslationLanguage };
   }): ITranslator {
@@ -200,11 +200,11 @@ export class EngineManager {
     return engine ?? this.dummy.translator;
   }
 
-  getTTS(query?: { name?: string; locale?: Locale }): ITextToSpeech {
-    return selectVoiceEngine(this.dummy.tts, this.maps.tts, this.#lists.tts, query);
+  findTTS(query?: { name?: string; locale?: Locale }): ITextToSpeech {
+    return findVoiceEngine(this.dummy.tts, this.maps.tts, this.#lists.tts, query);
   }
 
-  getSTT(query?: { name?: string; locale?: Locale }): ISpeechToText {
-    return selectVoiceEngine(this.dummy.stt, this.maps.stt, this.#lists.stt, query);
+  findSTT(query?: { name?: string; locale?: Locale }): ISpeechToText {
+    return findVoiceEngine(this.dummy.stt, this.maps.stt, this.#lists.stt, query);
   }
 }

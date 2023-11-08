@@ -18,7 +18,8 @@ enum Status {
 }
 
 type CreateSpeechOptions = {
-  engine: { name: string; locale: Locale };
+  engine: string;
+  locale: Locale;
   request: TTSRequest;
 };
 
@@ -57,7 +58,7 @@ export class HomeAssistant extends Assistant<HomeInterface & HomeBuiltinInterfac
   async setup(app: App): Promise<void> {
     if (this.#status !== Status.unready || !this.#options) return;
     this.#status = Status.preparing;
-    await this.data.setup(app.engines.getStore(), this.log.error);
+    await this.data.setup(app.engines.findStore(), this.log.error);
     await this.attach(app.plugins, { type: 'home', assistant: this, app });
     this.#status = Status.ready;
     this.emit('ready');
@@ -77,10 +78,8 @@ export class HomeAssistant extends Assistant<HomeInterface & HomeBuiltinInterfac
     if (!this.audioPlayer.active) return false;
     if (typeof options === 'string') {
       options = {
-        engine: {
-          name: this.defaultTTS.name,
-          locale: this.defaultTTS.locale,
-        },
+        engine: this.defaultTTS.engine,
+        locale: this.defaultTTS.locale,
         request: {
           voice: this.defaultTTS.voice,
           speed: this.defaultTTS.speed,
@@ -94,14 +93,14 @@ export class HomeAssistant extends Assistant<HomeInterface & HomeBuiltinInterfac
   }
 
   createSpeech(options: CreateSpeechOptions): PlayableSpeech<'home'> {
-    const tts = this.engines.getTTS(options.engine);
+    const tts = this.engines.findTTS({ name: options.engine, locale: options.locale });
     this.fallbackVoice(tts, options);
     const speech = new PlayableSpeechImpl({
       generator: async (request) => {
         if (request.text.length === 0) return { ...request, resource: this.createEmptyAudioResource() };
         return tts.generate(request);
       },
-      locale: options.engine.locale,
+      locale: options.locale,
       request: options.request,
       errorHandler: this.log.error,
     });

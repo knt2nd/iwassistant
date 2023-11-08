@@ -32,7 +32,7 @@ export const plugin: IPlugin<Options> = {
       },
     },
   },
-  setupGuild({ dict, assistant }) {
+  setupGuild({ assistant, dict }) {
     const leftTimes = new Map<string, number>();
     return {
       async onVoiceStateUpdate(oldState, newState) {

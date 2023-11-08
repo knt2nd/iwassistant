@@ -19,6 +19,7 @@ export const env: Env = {
   plugins: {
     'guild-announce': true,
     'guild-config': true,
+    'guild-default': true,
     'guild-follow': true,
     'guild-help': true,
     'guild-notify': true,

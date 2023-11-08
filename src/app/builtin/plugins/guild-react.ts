@@ -62,7 +62,7 @@ export const plugin: IPlugin<Options> = {
       // },
     ],
   },
-  setupGuild({ config, assistant }) {
+  setupGuild({ assistant, config }) {
     let lock = false;
     const actions: Action[] = [];
     for (const _action of config.actions) {
@@ -139,13 +139,11 @@ export const plugin: IPlugin<Options> = {
         const source = await message.channel.send(text);
         const voiceChannelId = assistant.voice?.channelId;
         if (voiceChannelId) {
-          const target = assistant.data.get('guild-config')?.voiceChannels?.[voiceChannelId]?.input ?? 'joined';
-          if (target === 'joined' ? voiceChannelId === member.voice.channelId : target === message.channelId) {
+          const input = assistant.data.get('guild-tts')?.channels?.[voiceChannelId]?.input;
+          if (input ? input === message.channelId : voiceChannelId === member.voice.channelId) {
             assistant.speak({
-              engine: {
-                name: assistant.defaultTTS.name,
-                locale: assistant.defaultTTS.locale,
-              },
+              engine: assistant.defaultTTS.engine,
+              locale: assistant.defaultTTS.locale,
               request: {
                 voice: assistant.defaultTTS.voice,
                 speed: assistant.defaultTTS.speed,

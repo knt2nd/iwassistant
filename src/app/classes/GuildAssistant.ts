@@ -68,13 +68,15 @@ enum Status {
 type PlayableSpeechMessage = Exclude<PlayableSpeech<'guild'>['message'], undefined>;
 
 type CreateSpeechOptions = {
-  engine: { name: string; locale: Locale };
+  engine: string;
+  locale: Locale;
   request: TTSRequest;
   message?: PlayableSpeechMessage;
 };
 
 type TranscribeOptions = {
-  engine: { name: string; locale: Locale };
+  engine: string;
+  locale: Locale;
   request: STTRequest;
 };
 
@@ -198,7 +200,7 @@ export class GuildAssistant extends Assistant<GuildInterface & GuildBuiltinInter
   async setup(app: App, optionsList: PluginContextOptions[]): Promise<void> {
     if (this.#status !== Status.unready) return;
     this.#status = Status.preparing;
-    await this.data.setup(this.engines.getStore(), this.log.error);
+    await this.data.setup(this.engines.findStore(), this.log.error);
     await app.hook('guildSetup', this, optionsList);
     this.log.debug?.('Data:', this.data);
     const attachReport = await this.attach(app.plugins, { type: 'guild', assistant: this, app, optionsList });
@@ -366,6 +368,7 @@ export class GuildAssistant extends Assistant<GuildInterface & GuildBuiltinInter
       event.notify(result).catch(this.log.error);
       this.log.info(log(result), options);
     })().catch((error) => {
+      clearTimeout(timer);
       if (!source.replied) source.reply(CommandResultEmoji.failure).catch(this.log.error);
       this.beep('failure', member);
       this.log.error(log('error'), options, error);
@@ -497,7 +500,7 @@ export class GuildAssistant extends Assistant<GuildInterface & GuildBuiltinInter
   }
 
   transcribe(options: TranscribeOptions): boolean {
-    const stt = this.engines.getSTT(options.engine);
+    const stt = this.engines.findSTT({ name: options.engine, locale: options.locale });
     this.fallbackVoice(stt, options);
     if (!stt.transcribe(options.request)) return false;
     this.hook('transcribe', options.request, stt)
@@ -510,10 +513,8 @@ export class GuildAssistant extends Assistant<GuildInterface & GuildBuiltinInter
     if (!this.audioPlayer.active) return false;
     if (typeof options === 'string') {
       options = {
-        engine: {
-          name: this.defaultTTS.name,
-          locale: this.defaultTTS.locale,
-        },
+        engine: this.defaultTTS.engine,
+        locale: this.defaultTTS.locale,
         request: {
           voice: this.defaultTTS.voice,
           speed: this.defaultTTS.speed,
@@ -527,7 +528,7 @@ export class GuildAssistant extends Assistant<GuildInterface & GuildBuiltinInter
   }
 
   createSpeech(options: CreateSpeechOptions): PlayableSpeech<'guild'> {
-    const tts = this.engines.getTTS(options.engine);
+    const tts = this.engines.findTTS({ name: options.engine, locale: options.locale });
     this.fallbackVoice(tts, options);
     const speechOptions: PlayableSpeechOptions = {
       generator: async (request) => {
@@ -535,7 +536,7 @@ export class GuildAssistant extends Assistant<GuildInterface & GuildBuiltinInter
         if (request.text.length === 0) return { ...request, resource: this.createEmptyAudioResource() };
         return tts.generate(request);
       },
-      locale: options.engine.locale,
+      locale: options.locale,
       request: options.request,
       errorHandler: this.log.error,
     };

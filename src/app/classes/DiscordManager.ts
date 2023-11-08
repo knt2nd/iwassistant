@@ -172,7 +172,7 @@ export class DiscordManager<Ready extends boolean = boolean> {
     this.#status = Status.destroyed;
   }
 
-  isReady(): this is this & DiscordManager<true> {
+  isReady(): this is DiscordManager<true> {
     return this.#status === Status.ready;
   }
 

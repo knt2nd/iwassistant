@@ -1,5 +1,16 @@
 import type { GuildMember, Message, MessageReaction } from 'discord.js';
-import { decodeMessage, isLocale, isRegionLocale, toLanguage } from '../../utils';
+import { ChannelType } from 'discord.js';
+import {
+  createChannelOptions,
+  createRangeOptions,
+  createVoiceIdOptions,
+  decodeMessage,
+  findVoiceIdOption,
+  isLocale,
+  isRegionLocale,
+  parseVoiceId,
+  toLanguage,
+} from '../../utils';
 
 // Note: Some TTS engines don't read some emojis but it should notify when someone posts a short emoji message somehow
 const EmojiOnly = /^(\p{Emoji_Modifier_Base}\p{Emoji_Modifier}?|\p{Emoji_Presentation}|\p{Emoji}\uFE0F)$/u;
@@ -30,6 +41,19 @@ export type Options = {
      */
     nameless: number;
   };
+  dict: {
+    input: { type: 'simple' };
+    voice: { type: 'simple' };
+    speed: { type: 'simple' };
+    pitch: { type: 'simple' };
+    joined: { type: 'simple' };
+  };
+  data: {
+    guild: {
+      channels: Record<string, { input?: string }>;
+      users: Record<string, { tts: VoiceConfig<'tts'> }>;
+    };
+  };
 };
 
 export const plugin: IPlugin<Options> = {
@@ -52,7 +76,45 @@ export const plugin: IPlugin<Options> = {
     },
     nameless: 60 * 60 * 1000,
   },
-  setupGuild({ config, assistant }) {
+  i18n: {
+    en: {
+      dict: {
+        input: 'Text-to-Speech Input',
+        voice: 'Text-to-Speech - Voice',
+        speed: 'Text-to-Speech - Speed',
+        pitch: 'Text-to-Speech - Pitch',
+        joined: 'Joined Member Message',
+      },
+    },
+    ja: {
+      dict: {
+        input: '読み上げ入力',
+        voice: '読み上げ - 音声',
+        speed: '読み上げ - 速さ',
+        pitch: '読み上げ - 高さ',
+        joined: '参加メンバーの投稿',
+      },
+    },
+    'zh-CN': {
+      dict: {
+        input: '朗读输入',
+        voice: '朗读 - 语音',
+        speed: '朗读 - 速度',
+        pitch: '朗读 - 音高',
+        joined: '加入成员的信息',
+      },
+    },
+    'zh-TW': {
+      dict: {
+        input: '朗讀輸入',
+        voice: '朗讀 - 語音',
+        speed: '朗讀 - 速度',
+        pitch: '朗讀 - 音高',
+        joined: '加入成員的信息',
+      },
+    },
+  },
+  setupGuild({ assistant, config, dict, data }) {
     let cancelButton: MessageReaction | undefined;
     const prevTimes = new Map<string, number>();
     const globalReplacers = [
@@ -97,20 +159,18 @@ export const plugin: IPlugin<Options> = {
     const isSpeakable = (channelId: string, member: GuildMember): boolean => {
       const current = assistant.voice;
       if (!current) return false;
-      const target = assistant.data.get('guild-config')?.voiceChannels?.[current.channelId]?.input ?? 'joined';
-      return target === 'joined' ? current.channelId === member.voice.channelId : target === channelId;
+      const input = data.channels?.[current.channelId]?.input;
+      return input ? input === channelId : current.channelId === member.voice.channelId;
     };
     const speak = (text: string, member: GuildMember, source: Message<true>, to?: string): void => {
-      const options = { ...(assistant.data.get('guild-config')?.users?.[member.id]?.tts ?? assistant.defaultTTS) };
+      const options = { ...(data.users?.[member.id]?.tts ?? assistant.defaultTTS) };
       if (to) {
         options.locale = isLocale(to) ? to : 'en';
         options.voice = '';
       }
       assistant.speak({
-        engine: {
-          name: options.name,
-          locale: options.locale,
-        },
+        engine: options.engine,
+        locale: options.locale,
         request: {
           voice: options.voice,
           speed: options.speed,
@@ -125,6 +185,91 @@ export const plugin: IPlugin<Options> = {
       });
     };
     return {
+      beforeConfigureVoiceChannel({ fields, locale, member, channel }) {
+        const subDict = dict.sub(locale);
+        const channelOptions = createChannelOptions(ChannelType.GuildText, assistant.guild.channels.cache, member);
+        const channelConfig = { ...data.channels?.[channel.id] };
+        const update = (): void => {
+          const channels = data.channels ?? {};
+          channels[channel.id] = channelConfig;
+          data.channels = channels;
+        };
+        fields.push({
+          name: subDict.get('input'),
+          options: [{ value: '_', label: `👤 ${subDict.get('joined')}` }, ...channelOptions],
+          value: channelConfig.input ?? '_',
+          update: (value) => {
+            if (value === '_') {
+              delete channelConfig.input;
+            } else {
+              channelConfig.input = value;
+            }
+            update();
+          },
+        });
+      },
+      beforeConfigureUser({ fields, locale, member }) {
+        const subDict = dict.sub(locale);
+        const voiceIdOptions = createVoiceIdOptions(assistant.engines.maps.tts);
+        const userConfig = { tts: { ...assistant.defaultTTS }, ...data.users?.[member.id] };
+        const update = (): void => {
+          const users = data.users ?? {};
+          users[member.id] = userConfig;
+          data.users = users;
+        };
+        const play = (): void => {
+          if (
+            (assistant.voice?.channelId ?? '_') === member.voice.channelId &&
+            assistant.engines.maps.tts.get(userConfig.tts.engine)?.active
+          ) {
+            assistant.speak({
+              engine: userConfig.tts.engine,
+              locale: userConfig.tts.locale,
+              request: {
+                voice: userConfig.tts.voice,
+                speed: userConfig.tts.speed,
+                pitch: userConfig.tts.pitch,
+                text: `OK ${member.displayName}`,
+              },
+            });
+          }
+        };
+        fields.push({
+          name: subDict.get('voice'),
+          options: voiceIdOptions,
+          value: findVoiceIdOption(voiceIdOptions, userConfig.tts)?.value ?? '',
+          update: (value) => {
+            const voice = parseVoiceId(value);
+            if (!voice) return false;
+            userConfig.tts.engine = voice.engine;
+            userConfig.tts.locale = voice.locale;
+            userConfig.tts.voice = voice.voice;
+            update();
+            play();
+            return true;
+          },
+        });
+        fields.push({
+          name: subDict.get('speed'),
+          options: createRangeOptions(),
+          value: userConfig.tts.speed,
+          update: (value) => {
+            userConfig.tts.speed = value;
+            update();
+            play();
+          },
+        });
+        fields.push({
+          name: subDict.get('pitch'),
+          options: createRangeOptions(),
+          value: userConfig.tts.pitch,
+          update: (value) => {
+            userConfig.tts.pitch = value;
+            update();
+            play();
+          },
+        });
+      },
       beforeSpeak(speech) {
         const request = speech.request;
         if (!speech.message) {
@@ -137,7 +282,7 @@ export const plugin: IPlugin<Options> = {
         const nameless = currentTime - (prevTimes.get(member.id) ?? 0) < config.nameless;
         prevTimes.set(member.id, currentTime);
         if (!nameless || request.text.length === 0 || EmojiOnly.test(request.text)) {
-          request.text = `${member.displayName}, ${request.text}`;
+          request.text = `${member.displayName}. ${request.text}`;
         }
         request.text = replace(request.text, speech.locale);
         speech.once('start', async () => {
@@ -190,6 +335,18 @@ export const plugin: IPlugin<Options> = {
       },
       onLeave() {
         prevTimes.clear();
+      },
+      onChannelDelete(channel) {
+        const channels = data.channels;
+        if (!channels?.[channel.id]) return;
+        delete channels[channel.id];
+        data.channels = channels;
+      },
+      onGuildMemberRemove(member) {
+        const users = data.users;
+        if (!users?.[member.id]) return;
+        delete users[member.id];
+        data.users = users;
       },
     };
   },

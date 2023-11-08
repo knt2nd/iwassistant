@@ -6,6 +6,13 @@ import {
   EmbedBuilder,
   PermissionsBitField,
 } from 'discord.js';
+import {
+  createChannelOptions,
+  createSwitchOptions,
+  createVoiceIdOptions,
+  findVoiceIdOption,
+  parseVoiceId,
+} from '../../utils';
 
 export type Options = {
   config: {
@@ -26,7 +33,15 @@ export type Options = {
     nameless: number;
   };
   dict: {
+    dictation: { type: 'simple' };
+    sttEngine: { type: 'simple' };
+    sttOutput: { type: 'simple' };
     deleteDictation: { type: 'simple' };
+  };
+  data: {
+    guild: {
+      channels: Record<string, { dictation: boolean; stt: VoiceConfig; output?: string }>;
+    };
   };
 };
 
@@ -41,44 +56,102 @@ export const plugin: IPlugin<Options> = {
   i18n: {
     en: {
       dict: {
+        dictation: 'Dictation',
+        sttEngine: 'Voice Recognition Engine',
+        sttOutput: 'Voice Recognition Output',
         deleteDictation: 'Delete Dictation',
       },
     },
     ja: {
       dict: {
+        dictation: '議事録',
+        sttEngine: '音声認識エンジン',
+        sttOutput: '音声認識出力',
         deleteDictation: '議事録削除',
       },
     },
     'zh-CN': {
       dict: {
+        dictation: '听写',
+        sttEngine: '语音识别引擎',
+        sttOutput: '语音识别输出',
         deleteDictation: '删除听写',
       },
     },
     'zh-TW': {
       dict: {
+        dictation: '聽寫',
+        sttEngine: '語音辨識引擎',
+        sttOutput: '語音辨識輸出',
         deleteDictation: '刪除聽寫',
       },
     },
   },
-  setupGuild({ config, dict, assistant }) {
+  setupGuild({ assistant, config, dict, data }) {
     let prevDictation: { userId: string; channelId: string; time: number } | undefined;
-    let allChannelConfigs = assistant.data.get('guild-config')?.voiceChannels;
-    assistant.data.subscribe('guild-config', async (value) => {
-      allChannelConfigs = value?.voiceChannels;
-      const current = assistant.voice;
-      if (!current) return;
-      const options = allChannelConfigs?.[current.channelId];
-      if (!options) return;
-      const selfDeaf = !(config.command || options.dictation);
-      if (current.selfDeaf === selfDeaf) return;
-      if (selfDeaf) {
-        assistant.deafen();
-      } else {
-        assistant.undeafen();
-      }
-      await assistant.rejoin();
-    });
     return {
+      beforeConfigureVoiceChannel({ fields, locale, member, channel }) {
+        const subDict = dict.sub(locale);
+        const voiceIdOptions = createVoiceIdOptions(assistant.engines.maps.stt);
+        const channelOptions = createChannelOptions(ChannelType.GuildText, assistant.guild.channels.cache, member);
+        const channelConfig = {
+          dictation: false,
+          stt: { ...assistant.defaultSTT },
+          ...data.channels?.[channel.id],
+        };
+        const update = (): void => {
+          const channels = data.channels ?? {};
+          channels[channel.id] = channelConfig;
+          data.channels = channels;
+        };
+        const reload = (): void => {
+          const current = assistant.voice;
+          if (!current || current.channelId !== channel.id) return;
+          const selfDeaf = !(config.command || channelConfig.dictation);
+          if (current.selfDeaf === selfDeaf) return;
+          if (selfDeaf) {
+            assistant.deafen();
+          } else {
+            assistant.undeafen();
+          }
+          assistant.rejoin().catch(assistant.log.error);
+        };
+        fields.push({
+          name: subDict.get('dictation'),
+          options: createSwitchOptions(),
+          value: !!data.channels?.[channel.id]?.dictation,
+          update: (value) => {
+            channelConfig.dictation = value;
+            update();
+            reload();
+          },
+        });
+        fields.push({
+          name: subDict.get('sttEngine'),
+          options: voiceIdOptions,
+          value: findVoiceIdOption(voiceIdOptions, channelConfig.stt)?.value ?? '',
+          update: (value) => {
+            const voice = parseVoiceId(value);
+            if (!voice) return false;
+            channelConfig.stt = voice;
+            update();
+            return true;
+          },
+        });
+        fields.push({
+          name: subDict.get('sttOutput'),
+          options: [{ value: '_', label: `🔊 ${channel.name}` }, ...channelOptions],
+          value: channelConfig.output ?? '_',
+          update: (value) => {
+            if (value === '_') {
+              delete channelConfig.output;
+            } else {
+              channelConfig.output = value;
+            }
+            update();
+          },
+        });
+      },
       beforeCommandsUpdate(commands) {
         const command = new ContextMenuCommandBuilder()
           .setType(ApplicationCommandType.Message)
@@ -101,16 +174,15 @@ export const plugin: IPlugin<Options> = {
         await interaction.reply({ content: '✅', ephemeral: true });
       },
       beforeJoin(options) {
-        options.selfDeaf = !(config.command || allChannelConfigs?.[options.channelId]?.dictation);
+        options.selfDeaf = !(config.command || data.channels?.[options.channelId]?.dictation);
       },
       onJoin(channel) {
         // when moved to other channel by user, bot's self-deaf status could be wrong
         // it can be covered by `assistant.rejoin()` here but it's not worth it
-        const selfDeaf = !(config.command || allChannelConfigs?.[channel.id]?.dictation);
-        if (selfDeaf) {
-          assistant.deafen();
-        } else {
+        if (config.command || data.channels?.[channel.id]?.dictation) {
           assistant.undeafen();
+        } else {
+          assistant.deafen();
         }
       },
       onLeave() {
@@ -118,8 +190,20 @@ export const plugin: IPlugin<Options> = {
         prevDictation = undefined;
       },
       onListen(audio) {
-        let interim = config.command && config.timeout > 0;
-        const channelConfig = allChannelConfigs?.[audio.channel.id];
+        const options = data.channels?.[audio.channel.id]?.stt ?? assistant.defaultSTT;
+        assistant.transcribe({
+          engine: options.engine,
+          locale: options.locale,
+          request: {
+            voice: options.voice,
+            interim: config.command && config.timeout > 0,
+            audio,
+          },
+        });
+      },
+      beforeTranscribe(request) {
+        const audio = request.audio;
+        const channelConfig = data.channels?.[audio.channel.id];
         if (channelConfig?.output) {
           const channel = assistant.guild.channels.cache.get(channelConfig.output);
           if (channel && (channel.type === ChannelType.GuildText || channel.type === ChannelType.GuildVoice)) {
@@ -127,7 +211,7 @@ export const plugin: IPlugin<Options> = {
           }
         }
         if (channelConfig?.dictation) {
-          interim = false;
+          request.interim = false;
           audio.once('end', async (request) => {
             if (audio.transcript.length === 0) return;
             const now = Date.now();
@@ -145,12 +229,7 @@ export const plugin: IPlugin<Options> = {
             prevDictation = { userId: member.id, channelId: audio.destination.id, time: now };
           });
         }
-        audio.once('end', () => {
-          if (audio.aborted || audio.transcript.length === 0) return;
-          const command = assistant.interpret(audio.transcript);
-          if (command) assistant.run({ type: 'voice', command, source: audio });
-        });
-        if (interim) {
+        if (request.interim && config.command && config.timeout > 0) {
           const timer = setTimeout(() => audio.abort(), config.timeout);
           const onResult = (transcript: string): void => {
             if (!assistant.activation.pattern.test(transcript)) return;
@@ -159,23 +238,22 @@ export const plugin: IPlugin<Options> = {
           };
           audio.on('result', onResult);
         }
-        const options = { ...(channelConfig?.stt ?? assistant.defaultSTT) };
-        assistant.transcribe({
-          engine: {
-            name: options.name,
-            locale: options.locale,
-          },
-          request: {
-            voice: options.voice,
-            interim,
-            audio,
-          },
+        audio.once('end', () => {
+          if (audio.aborted || audio.transcript.length === 0) return;
+          const command = assistant.interpret(audio.transcript);
+          if (command) assistant.run({ type: 'voice', command, source: audio });
         });
       },
       onMessageCreate(message) {
         if (prevDictation && message.author.id !== assistant.self.id && prevDictation.channelId === message.channelId) {
           prevDictation = undefined;
         }
+      },
+      onChannelDelete(channel) {
+        const channels = data.channels;
+        if (!channels?.[channel.id]) return;
+        delete channels[channel.id];
+        data.channels = channels;
       },
     };
   },

@@ -1,6 +1,13 @@
 import type { GuildMember, Message } from 'discord.js';
 import { ChannelType, EmbedBuilder } from 'discord.js';
-import { decodeMessage, omitString } from '../../utils';
+import {
+  createRangeOptions,
+  createTranslationLanguageOptions,
+  decodeMessage,
+  isTranslationLanguage,
+  omitString,
+  toTranslationLanguage,
+} from '../../utils';
 
 const EmojiPattern = /<(a?):(\w{2,32}):(\d{17,20})>/g;
 
@@ -22,6 +29,15 @@ export type Options = {
      */
     nameless: number;
   };
+  dict: {
+    lang: { type: 'simple' };
+    group: { type: 'simple' };
+  };
+  data: {
+    guild: {
+      channels: Record<string, { lang: TranslationLanguage; group: number }>;
+    };
+  };
 };
 
 export const plugin: IPlugin<Options> = {
@@ -32,7 +48,33 @@ export const plugin: IPlugin<Options> = {
     link: true,
     nameless: 300_000,
   },
-  setupGuild({ config, assistant }) {
+  i18n: {
+    en: {
+      dict: {
+        lang: 'Language',
+        group: 'Join Multilingual Group',
+      },
+    },
+    ja: {
+      dict: {
+        lang: '言語',
+        group: '多言語グループに参加',
+      },
+    },
+    'zh-CN': {
+      dict: {
+        lang: '语言',
+        group: '加入多语言群',
+      },
+    },
+    'zh-TW': {
+      dict: {
+        lang: '語言',
+        group: '加入多語言群',
+      },
+    },
+  },
+  setupGuild({ assistant, config, dict, data }) {
     let prevTranslations: Map<string, { userId: string; timer: NodeJS.Timeout }> | undefined;
     const deletePrevTranslation = (channelId: string): void => {
       if (!prevTranslations) return;
@@ -40,7 +82,7 @@ export const plugin: IPlugin<Options> = {
       if (prevTranslations.size === 0) prevTranslations = undefined;
     };
     const translate = async (text: string, source: Message<true>, member?: GuildMember): Promise<void> => {
-      const allChannelConfigs = assistant.data.get('guild-config')?.textChannels;
+      const allChannelConfigs = data.channels;
       const channelConfig = allChannelConfigs?.[source.channel.id];
       if (!channelConfig || channelConfig.group === 0) return;
       if (!member) member = source.member ?? (await assistant.guild.members.fetch(source.author.id));
@@ -104,6 +146,40 @@ export const plugin: IPlugin<Options> = {
       }
     };
     return {
+      beforeConfigureTextChannel({ fields, locale, channel }) {
+        const subDict = dict.sub(locale);
+        const groupMax = Math.max(0, ...Object.values(data.channels ?? {}).map((c) => c.group));
+        const channelConfig = {
+          lang: toTranslationLanguage(assistant.locale),
+          group: 0,
+          ...data.channels?.[channel.id],
+        };
+        const update = (): void => {
+          const channels = data.channels ?? {};
+          channels[channel.id] = channelConfig;
+          data.channels = channels;
+        };
+        fields.push({
+          name: subDict.get('lang'),
+          options: createTranslationLanguageOptions(assistant.engines.maps.translator, locale),
+          value: channelConfig.lang,
+          update: (value) => {
+            if (!isTranslationLanguage(value)) return false;
+            channelConfig.lang = value;
+            update();
+            return true;
+          },
+        });
+        fields.push({
+          name: subDict.get('group'),
+          options: [{ value: 0, label: '-' }, ...createRangeOptions({ max: groupMax + 1 })],
+          value: channelConfig.group,
+          update: (value) => {
+            channelConfig.group = value;
+            update();
+          },
+        });
+      },
       async onMessageCreate(message) {
         if (
           prevTranslations &&
@@ -129,6 +205,12 @@ export const plugin: IPlugin<Options> = {
       },
       async onDictationCreate({ source, destination, member }) {
         await translate(source.transcript, destination, member);
+      },
+      onChannelDelete(channel) {
+        const channels = data.channels;
+        if (!channels?.[channel.id]) return;
+        delete channels[channel.id];
+        data.channels = channels;
       },
     };
   },

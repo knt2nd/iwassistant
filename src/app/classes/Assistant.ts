@@ -71,15 +71,15 @@ export abstract class Assistant<T extends PluginInterface> extends PluginAdapter
   abstract readonly log: Logger;
   abstract readonly engines: EngineManager;
   abstract readonly audioPlayer: IAudioPlayer;
-  readonly defaultTTS: { name: string; locale: Locale; voice: string; speed: number; pitch: number };
-  readonly defaultSTT: { name: string; locale: Locale; voice: string };
+  readonly defaultTTS: VoiceConfig<'tts'>;
+  readonly defaultSTT: VoiceConfig;
   readonly activation: { examples: I18n<string>; pattern: RegExp };
   readonly #interpreters: CommandInterpreter[];
 
   constructor(options: AssistantOptions, errorHandler: ErrorHandler) {
     super(errorHandler);
-    this.defaultTTS = { name: '', locale: 'en', voice: '', speed: 10, pitch: 10 };
-    this.defaultSTT = { name: '', locale: 'en', voice: '' };
+    this.defaultTTS = { engine: '', locale: 'en', voice: '', speed: 10, pitch: 10 };
+    this.defaultSTT = { engine: '', locale: 'en', voice: '' };
     const activationWord = options.activation?.word ?? DefaultActivationWord;
     this.activation = {
       examples: Object.fromEntries(Object.entries(activationWord).map(([locale, { example }]) => [locale, example])),
@@ -101,16 +101,16 @@ export abstract class Assistant<T extends PluginInterface> extends PluginAdapter
   #initializeDefaultConfigs(): void {
     const pairs = [
       {
-        engine: this.engines.getTTS({ locale: this.locale }),
+        engine: this.engines.findTTS({ locale: this.locale }),
         config: this.defaultTTS,
       },
       {
-        engine: this.engines.getSTT({ locale: this.locale }),
+        engine: this.engines.findSTT({ locale: this.locale }),
         config: this.defaultSTT,
       },
     ];
     for (const { engine, config } of pairs) {
-      config.name = engine.name;
+      config.engine = engine.name;
       config.locale = this.locale;
       config.voice = engine.defaultVoices[this.locale] ?? engine.defaultVoices[toLanguage(this.locale)] ?? '';
     }
@@ -184,7 +184,7 @@ export abstract class Assistant<T extends PluginInterface> extends PluginAdapter
   }
 
   async translate(request: TranslatorRequest): Promise<TranslatorResponse> {
-    const translator = this.engines.getTranslator({ language: request });
+    const translator = this.engines.findTranslator({ language: request });
     return translator.translate(request);
   }
 
@@ -211,10 +211,10 @@ export abstract class Assistant<T extends PluginInterface> extends PluginAdapter
 
   protected fallbackVoice(
     engine: { name: string; defaultVoices: I18n<string> },
-    options: { engine: { name: string; locale: Locale }; request: { voice: string } },
+    options: { engine: string; locale: Locale; request: { voice: string } },
   ): void {
-    if (engine.name !== options.engine.name || options.request.voice === '') {
-      const locale = options.engine.locale;
+    if (engine.name !== options.engine || options.request.voice === '') {
+      const locale = options.locale;
       if (isRegionLocale(locale)) {
         const lang = toLanguage(locale);
         options.request.voice = engine.defaultVoices[locale] ?? engine.defaultVoices[lang] ?? '';
