@@ -10,8 +10,8 @@ const LocaleToTranslationLanguage = Object.fromEntries(
           ? 'zh-TW'
           : 'zh-CN'
         : locale === 'mni-Mtei'
-        ? 'mni-Mtei'
-        : lang,
+          ? 'mni-Mtei'
+          : lang,
     ];
   }),
 ) as Record<Locale, TranslationLanguage>;

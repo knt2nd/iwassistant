@@ -1,5 +1,4 @@
 import { Readable } from 'node:stream';
-import type { ReadableStream } from 'node:stream/web';
 import { Locales } from '../../enums';
 
 const DefaultVoice = 'en-US';
@@ -109,7 +108,7 @@ export const engine: IEngine<Config> = {
         if (!res.ok || !res.body) {
           throw new Error(`Google Translate TTS: ${res.status} ${res.statusText} ${url.toString()}`);
         }
-        return { voice, speed, pitch, text, resource: Readable.fromWeb(res.body as ReadableStream) };
+        return { voice, speed, pitch, text, resource: Readable.fromWeb(res.body) };
       },
     };
   },

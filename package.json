@@ -23,7 +23,7 @@
     "@google-cloud/speech": "^6.0.1",
     "@google-cloud/text-to-speech": "^5.0.0",
     "@google-cloud/translate": "^8.0.1",
-    "discord.js": "^14.13.0",
+    "discord.js": "^14.14.1",
     "ffmpeg-static": "^5.2.0",
     "sodium-native": "^4.0.4"
   },
@@ -47,6 +47,6 @@
     "lint-staged": "^14.0.0",
     "prettier": "^3.0.2",
     "ts-node": "^10.9.1",
-    "typescript": "^5.1.6"
+    "typescript": "^5.2.2"
   }
 }

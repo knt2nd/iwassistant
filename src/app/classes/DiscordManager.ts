@@ -114,7 +114,7 @@ export class DiscordManager<Ready extends boolean = boolean> {
   #status: Status;
 
   constructor(options: DiscordManagerOptions | undefined, di: { client: Client; assistants: GuildAssistantManager }) {
-    this.client = di.client;
+    this.client = di.client as Client<Ready>;
     this.assistants = di.assistants;
     this.#options = options;
     this.#intentNames = new Set(DefaultIntentNames);
