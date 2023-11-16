@@ -1,15 +1,18 @@
 import type { GuildMember, Message, MessageReaction } from 'discord.js';
 import { ChannelType } from 'discord.js';
+import type { GuildAssistant } from '../../classes';
 import {
   createChannelOptions,
   createRangeOptions,
   createVoiceIdOptions,
   decodeMessage,
   findVoiceIdOption,
+  isLanguage,
   isLocale,
   isRegionLocale,
   parseVoiceId,
   toLanguage,
+  toRegionLocales,
 } from '../../utils';
 
 // Note: Some TTS engines don't read some emojis but it should notify when someone posts a short emoji message somehow
@@ -18,6 +21,48 @@ const EmojiOnly = /^(\p{Emoji_Modifier_Base}\p{Emoji_Modifier}?|\p{Emoji_Present
 const CancelableLength = 30;
 
 const CancelEmoji = '⏭';
+
+function calc(id: string, at: number, digit: number, max: number): number {
+  const n = Number.parseInt(id.slice(id.length - at - digit, id.length - at));
+  return Math.floor((n / Math.pow(10, digit)) * (max + 1));
+}
+
+class RandomVoiceGenerator {
+  #assistant: GuildAssistant;
+  #cache = new Map<string, VoiceConfig<'tts'>>();
+
+  constructor(assistant: GuildAssistant) {
+    this.#assistant = assistant;
+  }
+
+  get(id: string): VoiceConfig<'tts'> {
+    let config = this.#cache.get(id);
+    if (!config) {
+      const configs: { engine: string; locale: Locale; voice: string }[] = [];
+      const locale = this.#assistant.locale;
+      const locales = isLanguage(locale) ? [locale, ...toRegionLocales(locale)] : [locale];
+      for (const locale of locales) {
+        for (const engine of this.#assistant.engines.maps.tts.values()) {
+          if (!engine.active) continue;
+          for (const voice of Object.keys(engine.locales[locale] ?? {})) {
+            configs.push({ engine: engine.name, locale, voice });
+          }
+        }
+      }
+      config = {
+        ...(configs[calc(id, 0, 2, configs.length - 1)] ?? this.#assistant.defaultTTS),
+        speed: 6 + calc(id, 2, 2, 8),
+        pitch: 6 + calc(id, 4, 2, 8),
+      };
+      this.#cache.set(id, config);
+    }
+    return config;
+  }
+
+  reset(): void {
+    this.#cache.clear();
+  }
+}
 
 export type Options = {
   config: {
@@ -117,6 +162,7 @@ export const plugin: IPlugin<Options> = {
   setupGuild({ assistant, config, dict, data }) {
     let cancelButton: MessageReaction | undefined;
     const prevTimes = new Map<string, number>();
+    const randomVoice = new RandomVoiceGenerator(assistant);
     const globalReplacers = [
       ...config.strippers.map(([pattern, flag]) => ({
         pattern: new RegExp(pattern, flag),
@@ -163,16 +209,13 @@ export const plugin: IPlugin<Options> = {
       return input ? input === channelId : current.channelId === member.voice.channelId;
     };
     const speak = (text: string, member: GuildMember, source: Message<true>, to?: string): void => {
-      const options = { ...(data.users?.[member.id]?.tts ?? assistant.defaultTTS) };
-      if (to) {
-        options.locale = isLocale(to) ? to : 'en';
-        options.voice = '';
-      }
+      const options = data.users?.[member.id]?.tts ?? randomVoice.get(member.id);
+      const translating = to !== undefined;
       assistant.speak({
         engine: options.engine,
-        locale: options.locale,
+        locale: translating ? (isLocale(to) ? to : 'en') : options.locale,
         request: {
-          voice: options.voice,
+          voice: translating ? '' : options.voice,
           speed: options.speed,
           pitch: options.pitch,
           text,
@@ -211,7 +254,7 @@ export const plugin: IPlugin<Options> = {
       beforeConfigureUser({ fields, locale, member }) {
         const subDict = dict.sub(locale);
         const voiceIdOptions = createVoiceIdOptions(assistant.engines.maps.tts);
-        const userConfig = { tts: { ...assistant.defaultTTS }, ...data.users?.[member.id] };
+        const userConfig = { tts: { ...randomVoice.get(member.id) }, ...data.users?.[member.id] };
         const update = (): void => {
           const users = data.users ?? {};
           users[member.id] = userConfig;
@@ -335,6 +378,7 @@ export const plugin: IPlugin<Options> = {
       },
       onLeave() {
         prevTimes.clear();
+        randomVoice.reset();
       },
       onChannelDelete(channel) {
         const channels = data.channels;
