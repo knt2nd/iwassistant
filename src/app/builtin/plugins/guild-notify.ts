@@ -1,5 +1,6 @@
 import { EmbedBuilder } from '@discordjs/builders';
 import type { Message, MessageReaction, PartialMessageReaction, PartialUser, User } from 'discord.js';
+import { PermissionFlagsBits } from 'discord.js';
 import { createSwitchOptions, decodeMessage, omitString } from '../../utils';
 
 function createId(reaction: MessageReaction | PartialMessageReaction, user: User | PartialUser): string {
@@ -14,6 +15,11 @@ export type Options = {
      */
     reaction: boolean;
     /**
+     * Icon URL of streaming notifier
+     * @default 'https://cdn.discordapp.com/emojis/1030229111811096586.webp'
+     */
+    streamIcon: string;
+    /**
      * Delay time to notify
      * @default 3000
      */
@@ -27,10 +33,12 @@ export type Options = {
   };
   dict: {
     reaction: { type: 'simple' };
+    streaming: { type: 'simple' };
+    isStreaming: { type: 'simple'; options: 'name' };
   };
   data: {
     guild: {
-      users: Record<string, { reaction: boolean }>;
+      users: Record<string, { reaction: boolean; streaming: boolean }>;
     };
   };
 };
@@ -40,6 +48,7 @@ export const plugin: IPlugin<Options> = {
   description: 'Discord DM notifier',
   config: {
     reaction: false,
+    streamIcon: 'https://cdn.discordapp.com/emojis/1030229111811096586.webp',
     delay: 3000,
     partial: true,
   },
@@ -47,21 +56,29 @@ export const plugin: IPlugin<Options> = {
     en: {
       dict: {
         reaction: 'Notification - Reaction',
+        streaming: 'Notification - Streaming',
+        isStreaming: '${name} is Streaming',
       },
     },
     ja: {
       dict: {
         reaction: '通知 - リアクション',
+        streaming: '通知 - 配信',
+        isStreaming: '${name}さんが配信中',
       },
     },
     'zh-CN': {
       dict: {
         reaction: '通知 - 反应',
+        streaming: '通知 - 直播',
+        isStreaming: '${name}正在直播',
       },
     },
     'zh-TW': {
       dict: {
         reaction: '通知 - 反應',
+        streaming: '通知 - 直播',
+        isStreaming: '${name}正在直播',
       },
     },
   },
@@ -70,7 +87,7 @@ export const plugin: IPlugin<Options> = {
     return {
       beforeConfigureUser({ fields, locale, member }) {
         const subDict = dict.sub(locale);
-        const userConfig = { reaction: config.reaction, ...data.users?.[member.id] };
+        const userConfig = { reaction: config.reaction, streaming: false, ...data.users?.[member.id] };
         const update = (): void => {
           const users = data.users ?? {};
           users[member.id] = userConfig;
@@ -82,6 +99,15 @@ export const plugin: IPlugin<Options> = {
           value: userConfig.reaction,
           update: (value) => {
             userConfig.reaction = value;
+            update();
+          },
+        });
+        fields.push({
+          name: subDict.get('streaming'),
+          options: createSwitchOptions(),
+          value: userConfig.streaming,
+          update: (value) => {
+            userConfig.streaming = value;
             update();
           },
         });
@@ -127,6 +153,36 @@ export const plugin: IPlugin<Options> = {
         if (!timer) return;
         clearTimeout(timer);
         timers.delete(id);
+      },
+      async onVoiceStateUpdate(oldState, newState) {
+        if (newState.member?.user.bot) return; // fetching member is too much
+        if (!(!oldState.streaming && newState.streaming)) return;
+        const channel = newState.channel;
+        if (!channel) return;
+        const userIds = Object.entries(data.users ?? {})
+          .filter(([, { streaming }]) => streaming)
+          .map(([id]) => id);
+        if (userIds.length === 0) return;
+        const streamer = newState.member ?? (await assistant.guild.members.fetch(newState.id));
+        const embed = new EmbedBuilder()
+          .setTitle(`${assistant.guild.name}   ${channel.name}`)
+          .setURL(channel.url)
+          .setAuthor({
+            name: dict.get('isStreaming', { name: streamer.displayName }),
+            iconURL: streamer.displayAvatarURL(),
+          });
+        if (config.streamIcon) embed.setThumbnail(config.streamIcon);
+        for (const userId of userIds) {
+          if (channel.members.some((member) => member.id === userId)) continue;
+          try {
+            const member = await assistant.guild.members.fetch(userId);
+            if (!channel.permissionsFor(member).has(PermissionFlagsBits.Connect)) continue;
+            await member.send({ embeds: [embed] });
+          } catch (error) {
+            assistant.log.error(error);
+          }
+        }
+        return;
       },
       onGuildMemberRemove(member) {
         const users = data.users;
