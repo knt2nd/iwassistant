@@ -35,6 +35,7 @@ type Events = {
 type Options = {
   debug: boolean;
   guildId: string;
+  group?: string;
 };
 
 type DI = {
@@ -45,22 +46,26 @@ type DI = {
   entersState: typeof entersState;
 };
 
-export type JoinOptions = {
+type JoinedConfig = {
   channelId: string;
   selfDeaf: boolean;
   selfMute: boolean;
+  group: string;
 };
+
+export type JoinOptions = Omit<JoinedConfig, 'group'>;
 
 export class GuildVoiceChannel extends EventEmitter<Events> implements IAudioPlayer {
   readonly #debug?: (type: ClassType, message: string, ...args: unknown[]) => void;
   readonly #guildId: string;
+  readonly #group: string;
   readonly #di: DI;
   #willRejoin: boolean;
   #current?:
     | {
         readonly connection: VoiceConnection;
         readonly player: AudioPlayer;
-        options: JoinOptions;
+        config: JoinedConfig;
         queue: PlayableAudio[];
       }
     | undefined;
@@ -74,6 +79,7 @@ export class GuildVoiceChannel extends EventEmitter<Events> implements IAudioPla
       };
     }
     this.#guildId = options.guildId;
+    this.#group = options.group ?? 'default';
     this.#di = di;
     this.#willRejoin = false;
   }
@@ -103,11 +109,12 @@ export class GuildVoiceChannel extends EventEmitter<Events> implements IAudioPla
 
   async join(options: JoinOptions): Promise<boolean> {
     if (this.#current) return false;
+    const config: JoinedConfig = { group: this.#group, ...options };
     const connection = this.#di.joinVoiceChannel({
       debug: !!this.#debug,
       guildId: this.#guildId,
       adapterCreator: this.#di.adapterCreator,
-      ...options,
+      ...config,
     });
     connection.on('debug', (message) => this.#debug?.('connection', message));
     connection.on('error', (error) => this.emit('error', this.#createError('connection', error)));
@@ -130,7 +137,7 @@ export class GuildVoiceChannel extends EventEmitter<Events> implements IAudioPla
       } catch {
         // already destroyed
       }
-      const options = this.#current.options;
+      const config = this.#current.config;
       this.#current = undefined;
       this.#debug?.('connection', 'Destroyed');
       this.emit('leave', this.#willRejoin);
@@ -138,7 +145,7 @@ export class GuildVoiceChannel extends EventEmitter<Events> implements IAudioPla
       this.#debug?.('connection', 'Will rejoin');
       setTimeout(() => {
         if (!this.#willRejoin) return;
-        this.join(options).catch((error) => this.emit('error', this.#createError('connection', error)));
+        this.join(config).catch((error) => this.emit('error', this.#createError('connection', error)));
       }, RejoinTryWait);
     };
     let reconnecting = false;
@@ -158,10 +165,11 @@ export class GuildVoiceChannel extends EventEmitter<Events> implements IAudioPla
             this.stop();
             this.#debug?.('player', 'Queue cleared');
           }
-          this.#current.options = {
+          this.#current.config = {
             channelId: connection.joinConfig.channelId ?? options.channelId,
             selfDeaf: connection.joinConfig.selfDeaf,
             selfMute: connection.joinConfig.selfMute,
+            group: connection.joinConfig.group,
           };
         })
         .catch(reset);
@@ -179,7 +187,7 @@ export class GuildVoiceChannel extends EventEmitter<Events> implements IAudioPla
     });
     connection.subscribe(player);
     this.#willRejoin = true;
-    this.#current = { connection, player, options, queue: [] };
+    this.#current = { connection, player, config, queue: [] };
     this.#debug?.('connection', 'Connected', connection.joinConfig);
     this.emit('join', connection, false);
     return true;
@@ -187,7 +195,7 @@ export class GuildVoiceChannel extends EventEmitter<Events> implements IAudioPla
 
   rejoin(options: JoinOptions): boolean {
     if (!this.#current) return false;
-    this.#current.options = options;
+    this.#current.config = { group: this.#group, ...options };
     return this.#current.connection.rejoin(options);
   }
 
