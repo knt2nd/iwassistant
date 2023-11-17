@@ -4,7 +4,6 @@
   "description": "A Discord bot that speaks, listens, and runs commands, like a smart speaker",
   "author": "Kanata",
   "license": "MIT",
-  "private": true,
   "scripts": {
     "build": "del-cli ./dist/ && cpy ./src/** !**/*.ts ./dist/ && tsc --project ./tsconfig.build.json",
     "start": "node ./dist/app",
