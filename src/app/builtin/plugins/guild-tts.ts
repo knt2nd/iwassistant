@@ -325,7 +325,7 @@ export const plugin: IPlugin<Options> = {
         const nameless = currentTime - (prevTimes.get(member.id) ?? 0) < config.nameless;
         prevTimes.set(member.id, currentTime);
         if (!nameless || request.text.length === 0 || EmojiOnly.test(request.text)) {
-          request.text = `${member.displayName}. ${request.text}`;
+          request.text = `${member.displayName}: ${request.text}`;
         }
         request.text = replace(request.text, speech.locale);
         speech.once('start', async () => {
