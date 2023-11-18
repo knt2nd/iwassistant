@@ -27,7 +27,7 @@ import {
 } from 'discord.js';
 import { createHash } from 'node:crypto';
 import type { Readable } from 'node:stream';
-import { toLanguage } from '../utils';
+import { isLanguage, toLanguage, toRegionLocales } from '../utils';
 import type { App } from './App';
 import type { AssistantOptions, IAudioPlayer, InterpretedCommand } from './Assistant';
 import { Assistant } from './Assistant';
@@ -161,6 +161,7 @@ export class GuildAssistant extends Assistant<GuildInterface & GuildBuiltinInter
   readonly engines: EngineManager;
   readonly audioPlayer: IAudioPlayer;
   readonly audioReceiver: GuildAudioReceiver;
+  readonly randomTTS: RandomTTS;
   readonly requiredPermissions: Set<PermissionsString>;
   readonly #voiceChannel: GuildVoiceChannel;
   #status: Status;
@@ -186,6 +187,7 @@ export class GuildAssistant extends Assistant<GuildInterface & GuildBuiltinInter
     this.engines = di.engines;
     this.audioPlayer = di.voiceChannel;
     this.audioReceiver = di.audioReceiver;
+    this.randomTTS = new RandomTTS(this);
     this.requiredPermissions = new Set(LeastPermissions);
     this.#voiceChannel = di.voiceChannel;
     this.#status = Status.unready;
@@ -245,6 +247,7 @@ export class GuildAssistant extends Assistant<GuildInterface & GuildBuiltinInter
     this.#voiceChannel.on('leave', (retry) => {
       this.log.info('Left');
       this.emit('leave', retry);
+      this.randomTTS.reset();
     });
     this.audioReceiver.on('create', (audio) => {
       this.emit('listen', audio);
@@ -586,5 +589,47 @@ class PlayableSpeechImpl
       .catch((error) => {
         this.emit('error', error);
       });
+  }
+}
+
+function calcById(id: string, at: number, digit: number, max: number): number {
+  const n = Number.parseInt(id.slice(id.length - at - digit, id.length - at));
+  return Math.floor((n / Math.pow(10, digit)) * (max + 1));
+}
+
+class RandomTTS {
+  #assistant: GuildAssistant;
+  #cache = new Map<string, VoiceConfig<'tts'>>();
+
+  constructor(assistant: GuildAssistant) {
+    this.#assistant = assistant;
+  }
+
+  get(id: string): VoiceConfig<'tts'> {
+    let config = this.#cache.get(id);
+    if (!config) {
+      const configs: { engine: string; locale: Locale; voice: string }[] = [];
+      const locale = this.#assistant.locale;
+      const locales = isLanguage(locale) ? [locale, ...toRegionLocales(locale)] : [locale];
+      for (const locale of locales) {
+        for (const engine of this.#assistant.engines.maps.tts.values()) {
+          if (!engine.active) continue;
+          for (const voice of Object.keys(engine.locales[locale] ?? {})) {
+            configs.push({ engine: engine.name, locale, voice });
+          }
+        }
+      }
+      config = {
+        ...(configs[calcById(id, 0, 2, configs.length - 1)] ?? this.#assistant.defaultTTS),
+        speed: 6 + calcById(id, 2, 2, 8),
+        pitch: 6 + calcById(id, 4, 2, 8),
+      };
+      this.#cache.set(id, config);
+    }
+    return config;
+  }
+
+  reset(): void {
+    this.#cache.clear();
   }
 }
