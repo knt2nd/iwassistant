@@ -4,7 +4,7 @@ import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { createServer } from 'node:http';
 import { join } from 'node:path';
 import type { WebSocket } from 'ws';
-import { Server } from 'ws';
+import { WebSocketServer } from 'ws';
 import type { App, Logger } from '../../classes';
 import { EventEmitter } from '../../classes';
 import { Locales } from '../../enums';
@@ -155,7 +155,7 @@ const AvailableLocales: (`${Language}-${string}` | [locale: Locale, id: string, 
   ['zh-HK', 'cmn-Hans-HK', '中文 - 香港 (简体)'],
 ];
 
-function availableLocales(): VoiceLocales {
+export function availableLocales(): VoiceLocales {
   const locales: VoiceLocales = {};
   for (const l of AvailableLocales) {
     const locale = typeof l === 'string' ? (isRegionLocale(l) ? l : (l.split('-')[0] as Language)) : l[0];
@@ -323,7 +323,7 @@ class ChromeAdapter extends EventEmitter<{
         }
       }
     });
-    const wss = new Server({ server });
+    const wss = new WebSocketServer({ server });
     wss.on('error', (error) => this.emit('error', error));
     wss.on('connection', (ws) => {
       this.#ws = ws;
