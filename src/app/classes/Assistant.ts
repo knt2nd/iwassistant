@@ -110,6 +110,7 @@ export abstract class Assistant<T extends PluginInterface> extends PluginAdapter
       },
     ];
     for (const { engine, config } of pairs) {
+      if (config.engine) continue;
       config.engine = engine.name;
       config.locale = this.locale;
       config.voice = engine.defaultVoices[this.locale] ?? engine.defaultVoices[toLanguage(this.locale)] ?? '';
