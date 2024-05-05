@@ -28,6 +28,7 @@
     "@typescript-eslint/no-unnecessary-condition": "error",
     "@typescript-eslint/promise-function-async": "error",
     "unicorn/filename-case": "off",
+    "unicorn/import-style": "off",
     "unicorn/no-array-push-push": "off",
     "unicorn/no-keyword-prefix": "off",
     "unicorn/no-null": "off",

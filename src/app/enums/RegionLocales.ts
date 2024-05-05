@@ -37,6 +37,7 @@ export enum RegionLocales {
   'en-TZ' = 'English - Tanzania',
   'en-US' = 'English - United States',
   'en-ZA' = 'English - South Africa',
+  'es-419' = 'español - LATAM', // Spanish - LATAM
   'es-AR' = 'español - Argentina', // Spanish - Argentina
   'es-BO' = 'español - Bolivia', // Spanish - Bolivia
   'es-CL' = 'español - Chile', // Spanish - Chile

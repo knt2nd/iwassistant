@@ -159,8 +159,8 @@ export const plugin: IPlugin<Options> = {
                 return context.fields;
               },
               messageModifier: (message, page) => {
-                if (page > 1) return message;
-                message.embeds?.unshift(new EmbedBuilder().setDescription(subDict.get('textToVoice')));
+                if (page > 1 || !Array.isArray(message.embeds)) return message;
+                message.embeds.unshift(new EmbedBuilder().setDescription(subDict.get('textToVoice')));
                 return message;
               },
               errorHandler: assistant.log.error,

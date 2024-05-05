@@ -135,7 +135,10 @@ export abstract class PluginAdapter<T extends PluginInterface> extends EventEmit
     };
   }
 
-  before<P extends keyof Hooks<T>>(hookName: P, listener: (...args: Hooks<T>[P]) => Awaitable<void>): this {
+  before<P extends keyof Hooks<T>>(
+    hookName: P,
+    listener: (...args: Hooks<T>[P] extends unknown[] ? Hooks<T>[P] : never) => Awaitable<void>,
+  ): this {
     let hooks = this.#hooks.get(hookName);
     if (!hooks) this.#hooks.set(hookName, (hooks = []));
     hooks.push(listener);

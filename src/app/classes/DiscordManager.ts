@@ -22,6 +22,7 @@ const IntentRequirements: Record<
 > = {
   AutoModerationConfiguration: undefined,
   AutoModerationExecution: undefined,
+  DirectMessagePolls: [['app', /^messagePoll/]],
   DirectMessageReactions: [['app', /^messageReaction/]],
   DirectMessageTyping: [['app', /^typing/]],
   DirectMessages: [['app', /^(message|channel)[^R]/]],
@@ -29,6 +30,7 @@ const IntentRequirements: Record<
   GuildIntegrations: [['guild', /^guildIntegration/]],
   GuildInvites: [['guild', /^invite/]],
   GuildMembers: undefined,
+  GuildMessagePolls: [['guild', /^messagePoll/]],
   GuildMessageReactions: [['guild', /^messageReaction/]],
   GuildMessageTyping: [['guild', /^typing/]],
   GuildMessages: undefined,
@@ -186,7 +188,7 @@ export class DiscordManager<Ready extends boolean = boolean> {
 
   #on<P extends keyof ClientEvents>(eventName: P, listener: (...args: ClientEvents[P]) => Awaitable<void>): void {
     if (!this.#eventNames.has(eventName)) return;
-    this.client.on(eventName, listener);
+    this.client.on(eventName, listener as (...args: ClientEvents[P]) => void);
   }
 
   #initializeEvents(app: App, log: Logger): void {
