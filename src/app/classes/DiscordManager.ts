@@ -301,6 +301,21 @@ export class DiscordManager<Ready extends boolean = boolean> {
       }
       assistants.get(reaction.message.guild.id)?.emit('messageReactionRemoveEmoji', reaction);
     });
+    // FIXME non-cached poll error (Discord.js issue?)
+    this.#on('messagePollVoteAdd', (pollAnswer, userId) => {
+      if (!pollAnswer.poll.message.inGuild()) {
+        app.emit('messagePollVoteAdd', pollAnswer, userId);
+        return;
+      }
+      assistants.get(pollAnswer.poll.message.guild.id)?.emit('messagePollVoteAdd', pollAnswer, userId);
+    });
+    this.#on('messagePollVoteRemove', (pollAnswer, userId) => {
+      if (!pollAnswer.poll.message.inGuild()) {
+        app.emit('messagePollVoteRemove', pollAnswer, userId);
+        return;
+      }
+      assistants.get(pollAnswer.poll.message.guild.id)?.emit('messagePollVoteRemove', pollAnswer, userId);
+    });
     /*
      * Guild
      */
@@ -480,6 +495,21 @@ export class DiscordManager<Ready extends boolean = boolean> {
     this.#on('stageInstanceDelete', (stageInstance) => {
       if (!stageInstance.guild) return;
       assistants.get(stageInstance.guild.id)?.emit('stageInstanceDelete', stageInstance);
+    });
+    /*
+     * Entitlement
+     */
+    this.#on('entitlementCreate', (entitlement) => {
+      if (!entitlement.guild) return;
+      assistants.get(entitlement.guild.id)?.emit('entitlementCreate', entitlement);
+    });
+    this.#on('entitlementDelete', (entitlement) => {
+      if (!entitlement.guild) return;
+      assistants.get(entitlement.guild.id)?.emit('entitlementDelete', entitlement);
+    });
+    this.#on('entitlementUpdate', (oldEntitlement, newEntitlement) => {
+      if (!newEntitlement.guild) return;
+      assistants.get(newEntitlement.guild.id)?.emit('entitlementUpdate', oldEntitlement, newEntitlement);
     });
     /*
      * Misc

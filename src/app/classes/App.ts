@@ -50,6 +50,8 @@ export type AppBuiltinInterface = {
   onMessageReactionRemove(...args: ClientEvents['messageReactionRemove']): Awaitable<void>;
   onMessageReactionRemoveAll(...args: ClientEvents['messageReactionRemoveAll']): Awaitable<void>;
   onMessageReactionRemoveEmoji(...args: ClientEvents['messageReactionRemoveEmoji']): Awaitable<void>;
+  onMessagePollVoteAdd(...args: ClientEvents['messagePollVoteAdd']): Awaitable<void>;
+  onMessagePollVoteRemove(...args: ClientEvents['messagePollVoteRemove']): Awaitable<void>;
   onChannelDelete(channel: DMChannel): Awaitable<void>;
   onChannelUpdate(oldChannel: DMChannel, newChannel: DMChannel): Awaitable<void>;
   onChannelPinsUpdate(channel: DMChannel | PartialDMChannel, date: Date): Awaitable<void>;

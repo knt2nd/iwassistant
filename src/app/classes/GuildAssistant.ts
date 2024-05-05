@@ -102,6 +102,8 @@ export type GuildBuiltinInterface = {
   onMessageReactionRemove(...args: ClientEvents['messageReactionRemove']): Awaitable<void>;
   onMessageReactionRemoveAll(...args: ClientEvents['messageReactionRemoveAll']): Awaitable<void>;
   onMessageReactionRemoveEmoji(...args: ClientEvents['messageReactionRemoveEmoji']): Awaitable<void>;
+  onMessagePollVoteAdd(...args: ClientEvents['messagePollVoteAdd']): Awaitable<void>;
+  onMessagePollVoteRemove(...args: ClientEvents['messagePollVoteRemove']): Awaitable<void>;
   onGuildCreate(...args: ClientEvents['guildCreate']): Awaitable<void>;
   onGuildDelete(...args: ClientEvents['guildDelete']): Awaitable<void>;
   onGuildUpdate(...args: ClientEvents['guildUpdate']): Awaitable<void>;
@@ -143,6 +145,9 @@ export type GuildBuiltinInterface = {
   onStageInstanceCreate(...args: ClientEvents['stageInstanceCreate']): Awaitable<void>;
   onStageInstanceDelete(...args: ClientEvents['stageInstanceDelete']): Awaitable<void>;
   onStageInstanceUpdate(...args: ClientEvents['stageInstanceUpdate']): Awaitable<void>;
+  onEntitlementCreate(...args: ClientEvents['entitlementCreate']): Awaitable<void>;
+  onEntitlementDelete(...args: ClientEvents['entitlementDelete']): Awaitable<void>;
+  onEntitlementUpdate(...args: ClientEvents['entitlementUpdate']): Awaitable<void>;
   onWebhooksUpdate(...args: ClientEvents['webhooksUpdate']): Awaitable<void>;
   onApplicationCommandPermissionsUpdate(...args: ClientEvents['applicationCommandPermissionsUpdate']): Awaitable<void>;
   onPresenceUpdate(...args: ClientEvents['presenceUpdate']): Awaitable<void>;
